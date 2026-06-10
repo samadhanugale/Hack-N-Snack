@@ -14,11 +14,26 @@
         }
       </select>
 
-      <button (click)="openCreate()"
+      <button [matMenuTriggerFor]="addMenu"
               class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all">
         <span class="material-icons text-[17px]">add</span>
-        New Question
+        Add Question
+        <span class="material-icons text-[18px] -mr-1">arrow_drop_down</span>
       </button>
+      <mat-menu #addMenu="matMenu" xPosition="before">
+        <button mat-menu-item (click)="openCreate()">
+          <span class="material-icons text-[18px] text-indigo-500 mr-2 align-middle">edit_note</span>
+          <span class="align-middle">Add from UI</span>
+        </button>
+        <button mat-menu-item (click)="goBulkUpload()">
+          <span class="material-icons text-[18px] text-emerald-500 mr-2 align-middle">upload_file</span>
+          <span class="align-middle">Bulk Upload</span>
+        </button>
+        <button mat-menu-item (click)="openAiGenerate()">
+          <span class="material-icons text-[18px] text-cyan-500 mr-2 align-middle">auto_awesome</span>
+          <span class="align-middle">Generate with AI</span>
+        </button>
+      </mat-menu>
     </div>
   </div>
 
@@ -38,10 +53,11 @@
         <p class="text-slate-800 font-semibold">No questions yet</p>
         <p class="text-slate-400 text-sm mt-1">Create your first question to get started</p>
       </div>
-      <button (click)="openCreate()"
+      <button [matMenuTriggerFor]="addMenu"
               class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 mt-2">
         <span class="material-icons text-[17px]">add</span>
-        Create Question
+        Add Question
+        <span class="material-icons text-[18px] -mr-1">arrow_drop_down</span>
       </button>
     </div>
   } @else {

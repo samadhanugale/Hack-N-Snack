@@ -7,11 +7,16 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { AdminService } from '../../../core/services/admin.service';
+import { AiService } from '../../../core/services/ai.service';
 import { StackService } from '../../../core/services/stack.service';
 import { SnackService } from '../../../core/services/snack.service';
 import { StackSummary, TopicResponse } from '../../../core/models';
 
+/**
+ * "Generate with AI" dialog (Level 2). Available to both SMEs and Admins.
+ * Generated questions are screened for duplicates server-side and land in
+ * "My Questions" with a DRAFT status.
+ */
 @Component({
   selector: 'app-ai-generate-dialog',
   standalone: true,
@@ -28,7 +33,7 @@ import { StackSummary, TopicResponse } from '../../../core/models';
         </div>
         <div>
           <h2 class="text-xl font-bold text-slate-900">AI Question Generator</h2>
-          <p class="text-slate-400 text-sm">Generate questions using GPT-4o</p>
+          <p class="text-slate-400 text-sm">Duplicates are screened automatically</p>
         </div>
       </div>
     </div>
@@ -110,11 +115,11 @@ import { StackSummary, TopicResponse } from '../../../core/models';
   `
 })
 export class AiGenerateDialogComponent implements OnInit {
-  private fb        = inject(FormBuilder);
-  private adminSvc  = inject(AdminService);
-  private stackSvc  = inject(StackService);
-  private snack     = inject(SnackService);
-  dialogRef         = inject(MatDialogRef<AiGenerateDialogComponent>);
+  private fb       = inject(FormBuilder);
+  private aiSvc    = inject(AiService);
+  private stackSvc = inject(StackService);
+  private snack    = inject(SnackService);
+  dialogRef        = inject(MatDialogRef<AiGenerateDialogComponent>);
 
   stacks  = signal<StackSummary[]>([]);
   topics  = signal<TopicResponse[]>([]);
@@ -142,11 +147,16 @@ export class AiGenerateDialogComponent implements OnInit {
     if (this.form.invalid || this.loading()) return;
     this.loading.set(true);
 
-    this.adminSvc.generateQuestions(this.form.value as any).subscribe({
+    this.aiSvc.generate(this.form.value as any).subscribe({
       next: res => {
-        this.snack.success(`Generated ${res.data.length} question(s) as DRAFT`);
+        const n = res.data.length;
+        if (n === 0) {
+          this.snack.error('No unique questions could be generated — try a different topic or context');
+        } else {
+          this.snack.success(`Generated ${n} unique question(s) as DRAFT`);
+        }
         this.loading.set(false);
-        this.dialogRef.close(true);
+        this.dialogRef.close(n > 0);
       },
       error: err => {
         this.snack.error(err.error?.message ?? 'AI generation failed');

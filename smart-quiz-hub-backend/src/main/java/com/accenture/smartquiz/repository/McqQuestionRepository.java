@@ -33,6 +33,9 @@ public interface McqQuestionRepository extends JpaRepository<McqQuestion, Long>,
     @Query("SELECT q FROM McqQuestion q WHERE q.stack.id = :stackId AND q.status = 'APPROVED'")
     List<McqQuestion> findApprovedByStackId(@Param("stackId") Long stackId);
 
+    /** All questions in a given stack + topic — used for duplicate / similarity detection. */
+    List<McqQuestion> findByStackIdAndTopicId(Long stackId, Long topicId);
+
     @Query("SELECT COUNT(q) FROM McqQuestion q WHERE q.reviewer.id = :reviewerId AND q.status = :status")
     long countByReviewerIdAndStatus(@Param("reviewerId") Long reviewerId, @Param("status") McqStatus status);
 

@@ -11,7 +11,7 @@ import { StackService } from '../../../core/services/stack.service';
 import { SnackService } from '../../../core/services/snack.service';
 import { McqResponse, McqStatus, StackSummary } from '../../../core/models';
 import { AssignReviewerDialogComponent } from './assign-reviewer-dialog.component';
-import { AiGenerateDialogComponent } from './ai-generate-dialog.component';
+import { AiGenerateDialogComponent } from '../../questions/ai-generate-dialog/ai-generate-dialog.component';
 import { QuestionFormComponent } from '../../questions/question-form/question-form.component';
 
 @Component({

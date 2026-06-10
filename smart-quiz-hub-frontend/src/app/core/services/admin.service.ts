@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {
-  ApiResponse, SmeUserResponse, AiGenerateRequest, McqResponse
-} from '../models';
+import { ApiResponse, SmeUserResponse } from '../models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -18,9 +16,5 @@ export class AdminService {
 
   getSmesByStack(stackId: number): Observable<ApiResponse<SmeUserResponse[]>> {
     return this.http.get<ApiResponse<SmeUserResponse[]>>(`${this.base}/stacks/${stackId}/smes`);
-  }
-
-  generateQuestions(req: AiGenerateRequest): Observable<ApiResponse<McqResponse[]>> {
-    return this.http.post<ApiResponse<McqResponse[]>>(`${this.base}/ai/generate`, req);
   }
 }

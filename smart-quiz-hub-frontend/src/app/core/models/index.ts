@@ -160,3 +160,30 @@ export interface AiGenerateRequest {
   topicContext: string;
   count: number;
 }
+
+export interface DuplicateCheckRequest {
+  stackId: number;
+  topicId: number;
+  questionStem: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  excludeId?: number | null;
+}
+
+export interface SimilarQuestion {
+  id: number;
+  questionStem: string;
+  stackName: string;
+  topicName: string;
+  status: McqStatus;
+  similarityPercent: number;
+}
+
+export interface DuplicateCheckResponse {
+  duplicate: boolean;
+  maxSimilarityPercent: number;
+  thresholdPercent: number;
+  similar: SimilarQuestion[];
+}

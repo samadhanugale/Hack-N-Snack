@@ -1,8 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -16,12 +18,13 @@ import { McqResponse, McqStatus } from '../../../core/models';
 import {
   QuestionFormComponent
 } from '../question-form/question-form.component';
+import { AiGenerateDialogComponent } from '../ai-generate-dialog/ai-generate-dialog.component';
 
 @Component({
   selector: 'app-my-questions',
   standalone: true,
   imports: [
-    MatTableModule, MatPaginatorModule, MatButtonModule, MatIconModule,
+    MatTableModule, MatPaginatorModule, MatButtonModule, MatIconModule, MatMenuModule,
     MatSelectModule, MatFormFieldModule, MatDialogModule,
     MatProgressSpinnerModule, MatChipsModule, MatTooltipModule,
     DatePipe, NgClass
@@ -33,6 +36,7 @@ export class MyQuestionsComponent implements OnInit {
   private mcqSvc = inject(McqService);
   private dialog = inject(MatDialog);
   private snack  = inject(SnackService);
+  private router = inject(Router);
 
   questions     = signal<McqResponse[]>([]);
   loading       = signal(true);
@@ -86,6 +90,17 @@ export class MyQuestionsComponent implements OnInit {
       data: {}, maxWidth: '720px', width: '100%'
     });
     ref.afterClosed().subscribe(result => { if (result) this.loadQuestions(); });
+  }
+
+  openAiGenerate(): void {
+    const ref = this.dialog.open(AiGenerateDialogComponent, {
+      maxWidth: '600px', width: '100%'
+    });
+    ref.afterClosed().subscribe(result => { if (result) this.loadQuestions(); });
+  }
+
+  goBulkUpload(): void {
+    this.router.navigate(['/bulk-upload']);
   }
 
   openEdit(q: McqResponse): void {

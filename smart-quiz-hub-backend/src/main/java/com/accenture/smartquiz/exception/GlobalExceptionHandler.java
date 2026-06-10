@@ -43,10 +43,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DuplicateQuestionException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDuplicateQuestion(DuplicateQuestionException ex) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> handleDuplicateQuestion(DuplicateQuestionException ex) {
         log.warn("Duplicate question detected: {}", ex.getMessage());
+        Map<String, Object> details = new HashMap<>();
+        details.put("maxSimilarityPercent", ex.getMaxSimilarityPercent());
+        details.put("thresholdPercent", ex.getThresholdPercent());
+        details.put("similar", ex.getSimilar());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage(), details));
     }
 
     @ExceptionHandler(BulkUploadException.class)

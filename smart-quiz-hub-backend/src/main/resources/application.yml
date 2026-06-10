@@ -49,6 +49,27 @@ spring:
           model: gpt-4o-mini
           temperature: 0.7
           max-tokens: 1000
+      embedding:
+        options:
+          model: text-embedding-3-small
+
+# ─────────────────────────────────────────────────────────────
+#  Level 2 — AI duplicate detection
+#  threshold           : block / replace when similarity >= this (0.0–1.0). 0.30 = 30%.
+#  embeddings-enabled  : use Spring AI embeddings for similarity. On any failure
+#                        (e.g. no OPENAI_API_KEY) it transparently falls back to a
+#                        deterministic lexical scorer, so the feature works offline.
+#  embedding-floor     : embedding cosine of unrelated English text is well above 0,
+#                        so cosine in [floor, 1] is rescaled to [0, 1] for intuitive %.
+# ─────────────────────────────────────────────────────────────
+app:
+  cors:
+    allowed-origins: http://localhost:4200
+  ai:
+    similarity:
+      threshold: ${AI_SIMILARITY_THRESHOLD:0.30}
+      embeddings-enabled: ${AI_EMBEDDINGS_ENABLED:true}
+      embedding-floor: ${AI_EMBEDDING_FLOOR:0.50}
 
 # SECURITY: Override JWT_SECRET env var with a cryptographically random 256-bit key in production.
 # Never use the default value outside of local development.
@@ -56,9 +77,6 @@ jwt:
   secret: ${JWT_SECRET:${JWT_SECRET}}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
-app:
-  cors:
-    allowed-origins: http://localhost:4200
 
 springdoc:
   api-docs:

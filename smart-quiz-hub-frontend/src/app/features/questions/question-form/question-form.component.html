@@ -64,7 +64,7 @@
         <span class="material-icons text-rose-400 text-[18px] mt-0.5 flex-shrink-0">feedback</span>
         <div>
           <p class="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1">Reviewer Feedback</p>
-          <p class="text-sm text-rose-700 leading-relaxed">{{ data.question.reviewerComments }}</p>
+          <p class="text-sm text-rose-700 leading-relaxed">{{ data.question?.reviewerComments }}</p>
         </div>
       </div>
     }
@@ -95,29 +95,89 @@
       </div>
     </div>
 
+    <!-- Level 2: AI duplicate-check result -->
+    @if (dupResult(); as dr) {
+      <div class="mt-1 rounded-xl border p-4"
+           [class.border-rose-200]="dr.duplicate" [class.bg-rose-50]="dr.duplicate"
+           [class.border-emerald-200]="!dr.duplicate" [class.bg-emerald-50]="!dr.duplicate">
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-[18px]"
+                [class.text-rose-500]="dr.duplicate" [class.text-emerald-600]="!dr.duplicate">
+            {{ dr.duplicate ? 'error_outline' : 'verified' }}
+          </span>
+          <p class="text-sm font-semibold"
+             [class.text-rose-700]="dr.duplicate" [class.text-emerald-700]="!dr.duplicate">
+            @if (dr.duplicate) {
+              Possible duplicate — {{ dr.maxSimilarityPercent }}% similar (threshold {{ dr.thresholdPercent }}%)
+            } @else {
+              No duplicates found — highest match {{ dr.maxSimilarityPercent }}% (threshold {{ dr.thresholdPercent }}%)
+            }
+          </p>
+        </div>
+
+        @if (dr.duplicate) {
+          <p class="text-xs text-rose-600/80 mt-1">
+            This question can only be sent for review once it is below {{ dr.thresholdPercent }}% similar.
+          </p>
+        }
+
+        @if (dr.similar.length) {
+          <div class="mt-3 flex flex-col gap-2">
+            @for (s of dr.similar; track s.id) {
+              <div class="flex items-start gap-3 bg-white/70 rounded-lg px-3 py-2 border border-slate-100">
+                <span class="shrink-0 text-xs font-bold px-2 py-1 rounded-md bg-rose-100 text-rose-700">
+                  {{ s.similarityPercent }}%
+                </span>
+                <div class="min-w-0">
+                  <p class="text-sm text-slate-700 truncate">{{ s.questionStem }}</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">{{ s.topicName }} · {{ s.status }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
   </form>
 </mat-dialog-content>
 
-<mat-dialog-actions class="px-6 py-4 flex justify-end gap-3 border-t border-slate-100">
-  <button mat-dialog-close
-          class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
-    Cancel
-  </button>
-  @if (canSubmitForReview) {
-    <button (click)="save(true)" [disabled]="form.invalid || loading()"
-            class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-amber-400 text-amber-600 bg-amber-50 hover:bg-amber-100 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition-all">
-      <span class="material-icons text-[16px]">send</span>
-      Save & Send for Review
-    </button>
-  }
-  <button (click)="save()" [disabled]="form.invalid || loading()"
-          class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-60 disabled:cursor-not-allowed transition-all">
-    @if (loading()) {
+<mat-dialog-actions class="px-6 py-4 flex items-center justify-between gap-3 border-t border-slate-100">
+  <button (click)="runDuplicateCheck()" [disabled]="!canCheck || checking() || loading()"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-cyan-300 text-cyan-700 bg-cyan-50 hover:bg-cyan-100 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+    @if (checking()) {
       <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
       </svg>
+      Checking…
+    } @else {
+      <span class="material-icons text-[16px]">plagiarism</span>
+      Duplicate Check
     }
-    {{ isEdit ? 'Update Question' : 'Save as Draft' }}
   </button>
+
+  <div class="flex items-center gap-3">
+    <button mat-dialog-close
+            class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+      Cancel
+    </button>
+    @if (canSubmitForReview) {
+      <button (click)="save(true)" [disabled]="form.invalid || loading() || checking()"
+              class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-amber-400 text-amber-600 bg-amber-50 hover:bg-amber-100 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition-all">
+        <span class="material-icons text-[16px]">send</span>
+        Save &amp; Send for Review
+      </button>
+    }
+    <button (click)="save()" [disabled]="form.invalid || loading() || checking()"
+            class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-60 disabled:cursor-not-allowed transition-all">
+      @if (loading()) {
+        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      }
+      {{ isEdit ? 'Update Question' : 'Save as Draft' }}
+    </button>
+  </div>
 </mat-dialog-actions>

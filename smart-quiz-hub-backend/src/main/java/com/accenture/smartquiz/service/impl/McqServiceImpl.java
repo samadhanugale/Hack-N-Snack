@@ -1,10 +1,13 @@
 package com.accenture.smartquiz.service.impl;
 
+import com.accenture.smartquiz.dto.request.DuplicateCheckRequest;
 import com.accenture.smartquiz.dto.request.McqRequest;
 import com.accenture.smartquiz.dto.response.BulkUploadResponse;
 import com.accenture.smartquiz.dto.response.DashboardStatsResponse;
+import com.accenture.smartquiz.dto.response.DuplicateCheckResponse;
 import com.accenture.smartquiz.dto.response.McqResponse;
 import com.accenture.smartquiz.dto.response.PagedResponse;
+import com.accenture.smartquiz.dto.response.SimilarQuestionResponse;
 import com.accenture.smartquiz.entity.McqQuestion;
 import com.accenture.smartquiz.entity.TechnologyStack;
 import com.accenture.smartquiz.entity.Topic;
@@ -12,6 +15,7 @@ import com.accenture.smartquiz.entity.User;
 import com.accenture.smartquiz.entity.enums.Difficulty;
 import com.accenture.smartquiz.entity.enums.McqStatus;
 import com.accenture.smartquiz.entity.enums.UserRole;
+import com.accenture.smartquiz.exception.DuplicateQuestionException;
 import com.accenture.smartquiz.exception.InvalidStatusTransitionException;
 import com.accenture.smartquiz.exception.ResourceNotFoundException;
 import com.accenture.smartquiz.exception.UnauthorizedAccessException;
@@ -21,6 +25,8 @@ import com.accenture.smartquiz.repository.TopicRepository;
 import com.accenture.smartquiz.repository.UserRepository;
 import com.accenture.smartquiz.security.SmartQuizUserDetails;
 import com.accenture.smartquiz.service.McqService;
+import com.accenture.smartquiz.service.SimilarityOutcome;
+import com.accenture.smartquiz.service.SimilarityService;
 import com.accenture.smartquiz.util.McqMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +40,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +54,7 @@ public class McqServiceImpl implements McqService {
     private final TechnologyStackRepository stackRepo;
     private final TopicRepository topicRepo;
     private final UserRepository userRepo;
+    private final SimilarityService similarityService;
 
     @Override
     @Transactional
@@ -135,8 +144,57 @@ public class McqServiceImpl implements McqService {
             throw new InvalidStatusTransitionException(question.getStatus(), McqStatus.READY_FOR_REVIEW);
         }
 
+        // Level 2: a question may only be sent for review if it is below the
+        // similarity threshold. The same check also backs the "Duplicate Check"
+        // button on the Edit page.
+        enforceNotDuplicate(question);
+
         question.setStatus(McqStatus.READY_FOR_REVIEW);
         return McqMapper.toResponse(mcqRepo.save(question));
+    }
+
+    /**
+     * Runs the similarity engine for a persisted question (excluding itself).
+     * Persists the resulting score and throws {@link DuplicateQuestionException}
+     * with the offending matches when the threshold is reached.
+     */
+    private void enforceNotDuplicate(McqQuestion question) {
+        SimilarityOutcome outcome = similarityService.analyze(
+                question.getStack().getId(), question.getTopic().getId(),
+                question.getQuestionStem(), question.getOptionA(), question.getOptionB(),
+                question.getOptionC(), question.getOptionD(), question.getId());
+
+        double threshold = similarityService.threshold();
+        question.setAiSimilarityScore(
+                BigDecimal.valueOf(outcome.maxScore()).setScale(4, RoundingMode.HALF_UP));
+
+        if (outcome.maxScore() < threshold) {
+            return;
+        }
+
+        int thresholdPercent = (int) Math.round(threshold * 100);
+        double maxPercent = McqMapper.toPercent(outcome.maxScore());
+
+        List<SimilarQuestionResponse> similar = outcome.matchesAtOrAbove(threshold).stream()
+                .map(m -> McqMapper.toSimilarResponse(m.question(), m.score()))
+                .toList();
+
+        String topMatch = similar.isEmpty() ? "" :
+                " Most similar: \"" + truncate(similar.get(0).getQuestionStem(), 80) + "\".";
+
+        String message = String.format(
+                "This question is %.1f%% similar to an existing question (threshold %d%%). "
+                        + "Please revise it and re-run the duplicate check before sending for review.%s",
+                maxPercent, thresholdPercent, topMatch);
+
+        throw new DuplicateQuestionException(message, maxPercent, thresholdPercent, similar);
+    }
+
+    private String truncate(String text, int max) {
+        if (text == null) {
+            return "";
+        }
+        return text.length() > max ? text.substring(0, max) + "..." : text;
     }
 
     @Override
@@ -218,6 +276,29 @@ public class McqServiceImpl implements McqService {
                 .successCount(success)
                 .failureCount(errors.size())
                 .errors(errors)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DuplicateCheckResponse checkDuplicate(DuplicateCheckRequest req) {
+        SimilarityOutcome outcome = similarityService.analyze(
+                req.getStackId(), req.getTopicId(),
+                req.getQuestionStem(), req.getOptionA(), req.getOptionB(),
+                req.getOptionC(), req.getOptionD(), req.getExcludeId());
+
+        double threshold = similarityService.threshold();
+        boolean duplicate = outcome.maxScore() >= threshold;
+
+        List<SimilarQuestionResponse> similar = outcome.matchesAtOrAbove(threshold).stream()
+                .map(m -> McqMapper.toSimilarResponse(m.question(), m.score()))
+                .toList();
+
+        return DuplicateCheckResponse.builder()
+                .duplicate(duplicate)
+                .maxSimilarityPercent(McqMapper.toPercent(outcome.maxScore()))
+                .thresholdPercent((int) Math.round(threshold * 100))
+                .similar(similar)
                 .build();
     }
 

@@ -6,6 +6,7 @@ import com.accenture.smartquiz.entity.McqQuestion;
 import com.accenture.smartquiz.entity.TechnologyStack;
 import com.accenture.smartquiz.entity.Topic;
 import com.accenture.smartquiz.entity.User;
+import com.accenture.smartquiz.entity.enums.Difficulty;
 import com.accenture.smartquiz.entity.enums.McqStatus;
 import com.accenture.smartquiz.exception.ResourceNotFoundException;
 import com.accenture.smartquiz.repository.McqQuestionRepository;
@@ -14,6 +15,8 @@ import com.accenture.smartquiz.repository.TopicRepository;
 import com.accenture.smartquiz.repository.UserRepository;
 import com.accenture.smartquiz.security.SmartQuizUserDetails;
 import com.accenture.smartquiz.service.AiQuestionService;
+import com.accenture.smartquiz.service.SimilarityOutcome;
+import com.accenture.smartquiz.service.SimilarityService;
 import com.accenture.smartquiz.util.McqMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,14 +26,33 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * AI-powered question generation (Level 2).
+ *
+ * <p>Each candidate is screened for duplication <em>during</em> generation:
+ * if it is too similar (>= the configured threshold) to an existing question
+ * in the same stack + topic, or to a question already accepted in this batch,
+ * it is discarded and a fresh one is generated to replace it.</p>
+ *
+ * <p>When the Spring AI chat model is unavailable (e.g. no {@code OPENAI_API_KEY}),
+ * a deterministic local generator supplies candidates so the feature still works
+ * end-to-end offline.</p>
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AiQuestionServiceImpl implements AiQuestionService {
+
+    /** Hard ceiling on AI calls per request, to bound cost/latency. */
+    private static final int MAX_AI_CALLS = 4;
 
     private final ChatClient.Builder chatClientBuilder;
     private final McqQuestionRepository mcqRepo;
@@ -38,6 +60,7 @@ public class AiQuestionServiceImpl implements AiQuestionService {
     private final TopicRepository topicRepo;
     private final UserRepository userRepo;
     private final ObjectMapper objectMapper;
+    private final SimilarityService similarityService;
 
     @Override
     @Transactional
@@ -48,35 +71,114 @@ public class AiQuestionServiceImpl implements AiQuestionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Topic", request.getTopicId()));
         User creator = userRepo.getReferenceById(currentUser.getUserId());
 
-        String prompt = buildPrompt(stack.getStackName(), topic.getTopicName(),
-                request.getDifficulty().name(), request.getTopicContext(), request.getCount());
+        final int target = Math.max(1, request.getCount());
+        final double threshold = similarityService.threshold();
 
-        List<Map<String, Object>> parsed = callAi(prompt);
-        List<McqResponse> results = new ArrayList<>();
+        List<McqQuestion> accepted = new ArrayList<>(target);
 
-        for (Map<String, Object> q : parsed) {
-            try {
-                McqQuestion question = McqQuestion.builder()
-                        .questionStem((String) q.get("question"))
-                        .optionA((String) q.get("optionA"))
-                        .optionB((String) q.get("optionB"))
-                        .optionC((String) q.get("optionC"))
-                        .optionD((String) q.get("optionD"))
-                        .correctOption(((String) q.get("correctOption")).toUpperCase())
-                        .difficulty(request.getDifficulty())
-                        .stack(stack)
-                        .topic(topic)
-                        .creator(creator)
-                        .status(McqStatus.DRAFT)
-                        .build();
-                results.add(McqMapper.toResponse(mcqRepo.save(question)));
-            } catch (Exception e) {
-                log.warn("Failed to persist AI-generated question: {}", e.getMessage());
+        Deque<Map<String, Object>> pool = new ArrayDeque<>();
+        int aiCalls = 0;
+        int fallbackCursor = 0;
+        int safety = 0;
+        final int maxSafety = target * 8 + 20;
+
+        while (accepted.size() < target && safety < maxSafety) {
+            safety++;
+
+            if (pool.isEmpty()) {
+                int need = (target - accepted.size()) + 2;
+                if (aiCalls < MAX_AI_CALLS) {
+                    aiCalls++;
+                    List<Map<String, Object>> batch = callAi(buildPrompt(
+                            stack.getStackName(), topic.getTopicName(),
+                            request.getDifficulty().name(), request.getTopicContext(), need));
+                    if (batch.isEmpty()) {
+                        log.info("AI chat returned no candidates - using local fallback generator");
+                        pool.addAll(fallbackCandidates(stack.getStackName(), topic.getTopicName(),
+                                need, fallbackCursor));
+                        fallbackCursor += need;
+                        aiCalls = MAX_AI_CALLS; // don't keep retrying a failing model
+                    } else {
+                        pool.addAll(batch);
+                    }
+                } else {
+                    pool.addAll(fallbackCandidates(stack.getStackName(), topic.getTopicName(),
+                            need, fallbackCursor));
+                    fallbackCursor += need;
+                }
             }
+
+            Map<String, Object> cand = pool.poll();
+            if (cand == null) {
+                continue;
+            }
+
+            McqQuestion candidate = toCandidate(cand, stack, topic, creator, request.getDifficulty());
+            if (candidate == null) {
+                continue; // malformed candidate - skip
+            }
+
+            double maxScore = screen(candidate);
+            if (maxScore >= threshold) {
+                log.debug("Discarding AI candidate - similarity {}% >= threshold {}%",
+                        Math.round(maxScore * 100), Math.round(threshold * 100));
+                continue; // replace with the next freshly generated candidate
+            }
+
+            candidate.setAiSimilarityScore(
+                    BigDecimal.valueOf(maxScore).setScale(4, RoundingMode.HALF_UP));
+            // Saved immediately so the next candidate is screened against it too
+            // (JPA auto-flushes before the next similarity query in this transaction).
+            McqQuestion saved = mcqRepo.save(candidate);
+            accepted.add(saved);
         }
 
-        return results;
+        if (accepted.size() < target) {
+            log.warn("AI generation produced {} of {} requested question(s) after de-duplication",
+                    accepted.size(), target);
+        }
+
+        return accepted.stream().map(McqMapper::toResponse).toList();
     }
+
+    /** Max similarity of a candidate against existing questions in the same stack + topic. */
+    private double screen(McqQuestion candidate) {
+        SimilarityOutcome outcome = similarityService.analyze(
+                candidate.getStack().getId(), candidate.getTopic().getId(),
+                candidate.getQuestionStem(), candidate.getOptionA(), candidate.getOptionB(),
+                candidate.getOptionC(), candidate.getOptionD(), null);
+        return outcome.maxScore();
+    }
+
+    private McqQuestion toCandidate(Map<String, Object> q, TechnologyStack stack, Topic topic,
+                                    User creator, Difficulty difficulty) {
+        String stem = str(q, "question");
+        String a = str(q, "optionA");
+        String b = str(q, "optionB");
+        String c = str(q, "optionC");
+        String d = str(q, "optionD");
+        String correct = str(q, "correctOption").toUpperCase();
+
+        if (stem.isBlank() || a.isBlank() || b.isBlank() || c.isBlank() || d.isBlank()
+                || !correct.matches("[ABCD]")) {
+            return null;
+        }
+
+        return McqQuestion.builder()
+                .questionStem(stem)
+                .optionA(a).optionB(b).optionC(c).optionD(d)
+                .correctOption(correct)
+                .difficulty(difficulty)
+                .stack(stack)
+                .topic(topic)
+                .creator(creator)
+                .status(McqStatus.DRAFT)
+                .build();
+    }
+
+    // ------------------------------------------------------------------
+    //  Spring AI chat
+    // ------------------------------------------------------------------
 
     private String buildPrompt(String stack, String topic, String difficulty,
                                 String context, int count) {
@@ -89,6 +191,7 @@ public class AiQuestionServiceImpl implements AiQuestionService {
 
                 Rules:
                 - Each question must be scenario-based (start with a developer name and a real-world situation)
+                - Make every question distinct from the others - vary the scenario, wording, and focus
                 - Options must be plausible and educational
                 - Only one correct answer per question
 
@@ -106,7 +209,6 @@ public class AiQuestionServiceImpl implements AiQuestionService {
                 """.formatted(count, topic, stack, difficulty, context);
     }
 
-    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> callAi(String prompt) {
         try {
             ChatClient chatClient = chatClientBuilder.build();
@@ -124,9 +226,154 @@ public class AiQuestionServiceImpl implements AiQuestionService {
     }
 
     private String extractJson(String text) {
+        if (text == null) {
+            return "[]";
+        }
         int start = text.indexOf('[');
         int end = text.lastIndexOf(']');
-        if (start == -1 || end == -1) return "[]";
+        if (start == -1 || end == -1 || end < start) {
+            return "[]";
+        }
         return text.substring(start, end + 1);
+    }
+
+    // ------------------------------------------------------------------
+    //  Offline fallback generator
+    //  Produces deterministic, mutually-distinct placeholder MCQs so the
+    //  feature is demonstrable without an OPENAI_API_KEY. Real generation
+    //  uses the Spring AI chat model above.
+    // ------------------------------------------------------------------
+
+    private static final String[] NAMES = {
+            "Alex", "Maria", "John", "Priya", "Sam", "Nina",
+            "Omar", "Lena", "Raj", "Eva", "Tom", "Zoe"
+    };
+
+    private List<Map<String, Object>> fallbackCandidates(String stack, String topic,
+                                                         int count, int cursor) {
+        List<Map<String, Object>> out = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            out.add(fallbackQuestion(stack, topic, cursor + i));
+        }
+        return out;
+    }
+
+    private Map<String, Object> fallbackQuestion(String stack, String topic, int idx) {
+        String name = NAMES[idx % NAMES.length];
+        int facet = idx % 10;
+
+        String stem;
+        String a, b, c, d, correct;
+
+        switch (facet) {
+            case 0 -> {
+                stem = name + " is starting a project and wants to understand the core role of "
+                        + topic + " within " + stack + ". What primarily describes its purpose?";
+                a = "It provides the intended capability and abstractions for this concern";
+                b = "It only formats console log output";
+                c = "It is purely a build-time packaging tool";
+                d = "It manages operating-system level threads exclusively";
+                correct = "A";
+            }
+            case 1 -> {
+                stem = name + " must decide when to apply " + topic + " in a " + stack
+                        + " application. Which situation is the best fit?";
+                a = "Whenever a class name happens to be long";
+                b = "When the requirement matches what this concept is designed to solve";
+                c = "Only inside unit tests and never in production";
+                d = "Exclusively when the database is offline";
+                correct = "B";
+            }
+            case 2 -> {
+                stem = "While learning " + topic + ", " + name
+                        + " keeps hitting a frequent beginner mistake. Which pitfall should be avoided?";
+                a = "Reading the official reference documentation";
+                b = "Writing small, focused examples first";
+                c = "Ignoring configuration and assuming defaults always apply everywhere";
+                d = "Validating behaviour with tests";
+                correct = "C";
+            }
+            case 3 -> {
+                stem = name + " is comparing " + topic + " against an alternative approach in " + stack
+                        + ". Which statement captures the key distinction?";
+                a = "Both are byte-for-byte identical in every way";
+                b = "The alternative cannot run on any JVM";
+                c = "They differ in the problem they target and how they are applied";
+                d = "Neither can be configured at all";
+                correct = "C";
+            }
+            case 4 -> {
+                stem = name + " needs to set up " + topic + " correctly in a fresh " + stack
+                        + " module. What is a sensible first configuration step?";
+                a = "Delete the project and start in a different language";
+                b = "Add and configure the relevant dependency or component, then verify it loads";
+                c = "Disable all logging permanently";
+                d = "Hard-code every value with no externalisation";
+                correct = "B";
+            }
+            case 5 -> {
+                stem = "A feature using " + topic + " fails at runtime for " + name
+                        + ". What is the most reasonable troubleshooting move?";
+                a = "Assume the framework is broken and stop investigating";
+                b = "Randomly change unrelated files until something works";
+                c = "Inspect the error, check configuration, and isolate the failing piece";
+                d = "Remove all error handling so exceptions are hidden";
+                correct = "C";
+            }
+            case 6 -> {
+                stem = name + " is reviewing performance of code that relies on " + topic + " in " + stack
+                        + ". Which consideration is most relevant?";
+                a = "Choosing variable names that look fast";
+                b = "Understanding the cost of the operation and avoiding needless repetition";
+                c = "Always disabling the feature in production";
+                d = "Adding more comments to speed up execution";
+                correct = "B";
+            }
+            case 7 -> {
+                stem = "Order of operations matters when " + name + " works with " + topic + ". "
+                        + "Which sequence is conceptually correct?";
+                a = "Use the result before anything is initialised";
+                b = "Initialise or configure first, then use, then release or finalise as needed";
+                c = "Finalise before configuring";
+                d = "Skip initialisation entirely in every case";
+                correct = "B";
+            }
+            case 8 -> {
+                stem = name + " sees an annotation or keyword associated with " + topic
+                        + " in a " + stack + " codebase. What is its general intent?";
+                a = "To declare or wire the intended behaviour for the framework to apply";
+                b = "To rename the source file at compile time";
+                c = "To permanently disable the surrounding class";
+                d = "To convert Java into a scripting language";
+                correct = "A";
+            }
+            default -> {
+                stem = name + " must choose the right tool for a real-world task and is weighing "
+                        + topic + " in " + stack + ". Which factor should drive the decision?";
+                a = "The colour of the IDE theme";
+                b = "Whether the tool fits the requirement and constraints at hand";
+                c = "The number of letters in the class name";
+                d = "Personal preference for unrelated libraries";
+                correct = "B";
+            }
+        }
+
+        return Map.of(
+                "question", stem,
+                "optionA", a,
+                "optionB", b,
+                "optionC", c,
+                "optionD", d,
+                "correctOption", correct
+        );
+    }
+
+    // ------------------------------------------------------------------
+    //  Helpers
+    // ------------------------------------------------------------------
+
+    private static String str(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        return value == null ? "" : value.toString().trim();
     }
 }

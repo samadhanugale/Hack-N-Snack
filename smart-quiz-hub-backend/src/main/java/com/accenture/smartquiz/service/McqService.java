@@ -1,8 +1,10 @@
 package com.accenture.smartquiz.service;
 
+import com.accenture.smartquiz.dto.request.DuplicateCheckRequest;
 import com.accenture.smartquiz.dto.request.McqRequest;
 import com.accenture.smartquiz.dto.response.BulkUploadResponse;
 import com.accenture.smartquiz.dto.response.DashboardStatsResponse;
+import com.accenture.smartquiz.dto.response.DuplicateCheckResponse;
 import com.accenture.smartquiz.dto.response.McqResponse;
 import com.accenture.smartquiz.dto.response.PagedResponse;
 import com.accenture.smartquiz.entity.enums.Difficulty;
@@ -31,4 +33,7 @@ public interface McqService {
     DashboardStatsResponse getDashboardStats(SmartQuizUserDetails currentUser);
 
     BulkUploadResponse bulkUpload(MultipartFile file, SmartQuizUserDetails currentUser);
+
+    /** AI-driven similarity check for a candidate MCQ (Edit page, Level 2). */
+    DuplicateCheckResponse checkDuplicate(DuplicateCheckRequest request);
 }
