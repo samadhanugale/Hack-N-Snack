@@ -1,0 +1,37 @@
+# Smart Quiz AI Hub — one-command, fully self-contained stack.
+#
+#   docker compose up --build        # build + start everything
+#   open http://localhost:4200       # (or whatever APP_PORT you set)
+#
+# All settings live in the `.env` file next to this one — edit that, never this
+# file. Every value below has a sensible default, so it also runs with no .env.
+# Everything (PostgreSQL + Spring Boot + Angular) runs in a single image, fully
+# offline. The UI and API are served from the same port via an internal proxy,
+# so changing APP_PORT is safe (no CORS / URL tweaks needed).
+services:
+  smart-quiz-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: smart-quiz-hub:latest
+    container_name: smart-quiz-hub
+    ports:
+      # Left side = port on YOUR machine (change APP_PORT in .env). Open this in the browser.
+      - "${APP_PORT:-4200}:4200"
+    environment:
+      # ── AI (optional) — leave OPENAI_API_KEY blank to run offline ──────────
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-dummy-key-replace-in-prod}"
+      AI_SIMILARITY_THRESHOLD: "${AI_SIMILARITY_THRESHOLD:-0.30}"
+      AI_EMBEDDINGS_ENABLED: "${AI_EMBEDDINGS_ENABLED:-true}"
+      AI_EMBEDDING_FLOOR: "${AI_EMBEDDING_FLOOR:-0.50}"
+      # ── Security ───────────────────────────────────────────────────────────
+      JWT_SECRET: "${JWT_SECRET:-${JWT_SECRET}}"
+      JWT_EXPIRATION_MS: "${JWT_EXPIRATION_MS:-86400000}"
+      # ── Database (internal; only applied on a fresh DB, see .env) ───────────
+      DB_PASSWORD: "${DB_PASSWORD:-root}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:

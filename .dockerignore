@@ -1,0 +1,16 @@
+# Keep the build context small and reproducible — everything below is
+# rebuilt inside the image or is irrelevant to the build.
+**/node_modules
+**/target
+**/dist
+**/.angular
+**/.idea
+**/.vscode
+.git
+.gitignore
+**/logs
+*.log
+*.xlsx
+generate-test-upload.js
+DOCKER.md
+LEVEL2.md
