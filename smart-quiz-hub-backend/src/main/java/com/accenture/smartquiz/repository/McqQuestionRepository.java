@@ -37,6 +37,12 @@ public interface McqQuestionRepository extends JpaRepository<McqQuestion, Long>,
 
     long countByStatus(McqStatus status);
 
+    long countByReviewerId(Long reviewerId);
+
+    boolean existsByCreatorId(Long creatorId);
+
+    boolean existsByReviewerId(Long reviewerId);
+
     @Query(name = "McqQuestion.findApprovedByStackId")
     List<McqQuestion> findApprovedByStackId(@Param("stackId") Long stackId);
 

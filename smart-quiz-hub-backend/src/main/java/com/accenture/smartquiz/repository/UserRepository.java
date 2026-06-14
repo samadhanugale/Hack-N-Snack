@@ -21,6 +21,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByRoleAndActiveTrue(UserRole role);
 
+    List<User> findByRole(UserRole role);
+
+    List<User> findAllByOrderByFullNameAsc();
+
     @Query(name = "User.findSmesByStackId")
     List<User> findSmesByStackId(@Param("stackId") Long stackId);
 }
