@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import {
@@ -26,7 +26,7 @@ export interface McqListQuery {
 export class McqService {
   private base = `${environment.apiUrl}/questions`;
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   createQuestion(req: McqRequest): Observable<ApiResponse<McqResponse>> {
     return this.http.post<ApiResponse<McqResponse>>(this.base, req);

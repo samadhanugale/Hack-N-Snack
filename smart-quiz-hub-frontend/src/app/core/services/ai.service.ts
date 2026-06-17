@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -15,7 +15,7 @@ import { environment } from '../../../environments/environment';
 export class AiService {
   private base = `${environment.apiUrl}/ai`;
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /** Generate MCQs with AI. Duplicates (>= threshold) are auto-replaced server-side. */
   generate(req: AiGenerateRequest): Observable<ApiResponse<McqResponse[]>> {

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -27,7 +27,7 @@ export interface BulkDecisionResponse {
 export class ReviewService {
   private base = `${environment.apiUrl}/reviews`;
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   assignReviewer(questionId: number, req: AssignReviewerRequest): Observable<ApiResponse<McqResponse>> {
     return this.http.post<ApiResponse<McqResponse>>(

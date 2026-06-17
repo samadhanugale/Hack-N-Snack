@@ -1,9 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable({ providedIn: 'root' })
 export class SnackService {
-  constructor(private snack: MatSnackBar) {}
+  private snack = inject(MatSnackBar);
 
   success(msg: string): void {
     this.snack.open(msg, 'Close', {

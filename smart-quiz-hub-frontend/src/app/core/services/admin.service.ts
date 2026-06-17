@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse, SmeUserResponse } from '../models';
@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment';
 export class AdminService {
   private base = `${environment.apiUrl}/admin`;
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   getAllSmes(): Observable<ApiResponse<SmeUserResponse[]>> {
     return this.http.get<ApiResponse<SmeUserResponse[]>>(`${this.base}/smes`);

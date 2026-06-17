@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse, StackDetail, StackRequest, StackSummary, TopicDetail, TopicRequest, TopicResponse } from '../models';
@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment';
 export class StackService {
   private base = `${environment.apiUrl}/stacks`;
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   getStacks(): Observable<ApiResponse<StackSummary[]>> {
     return this.http.get<ApiResponse<StackSummary[]>>(this.base);

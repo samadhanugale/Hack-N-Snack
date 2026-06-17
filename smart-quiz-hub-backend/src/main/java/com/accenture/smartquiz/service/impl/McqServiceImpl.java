@@ -435,7 +435,7 @@ public class McqServiceImpl implements McqService {
                                 "Correct answer '" + token + "' is out of range (only " + optionCount + " options)");
                     return idx;
                 })
-                .distinct().sorted().collect(Collectors.toList());
+                .distinct().sorted().toList();
         if (indices.isEmpty())
             throw new IllegalArgumentException("At least one correct answer is required");
         return indices;

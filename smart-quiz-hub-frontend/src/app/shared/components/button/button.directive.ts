@@ -1,4 +1,4 @@
-import { Directive, HostBinding, Input } from '@angular/core';
+import { Directive, HostBinding, input } from '@angular/core';
 
 export type ButtonVariant =
   | 'primary'    // main CTA — indigo→violet gradient
@@ -52,12 +52,12 @@ const VARIANTS: Record<ButtonVariant, string> = {
   standalone: true,
 })
 export class ButtonDirective {
-  @Input('appBtn') variant: ButtonVariant | '' = 'primary';
-  @Input() size: ButtonSize = 'md';
+  variant = input<ButtonVariant | ''>('primary', { alias: 'appBtn' });
+  size = input<ButtonSize>('md');
 
   @HostBinding('class')
   get classes(): string {
-    const variant = this.variant || 'primary';
-    return `${BASE} ${SIZES[this.size]} ${VARIANTS[variant]}`;
+    const variant = this.variant() || 'primary';
+    return `${BASE} ${SIZES[this.size()]} ${VARIANTS[variant]}`;
   }
 }
