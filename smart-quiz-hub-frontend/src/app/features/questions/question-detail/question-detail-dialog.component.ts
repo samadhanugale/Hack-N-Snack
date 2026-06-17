@@ -1,9 +1,13 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { McqResponse } from '../../../core/models';
 import { statusBadgeClass, difficultyBadgeClass, statusLabel } from '../../../shared/utils/badge';
 import { AuditService, AuditLog } from '../../../core/services/audit.service';
+import { CommentService, QuestionComment } from '../../../core/services/comment.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { ButtonDirective } from '../../../shared/components/button/button.directive';
 
 export interface QuestionDetailData {
   question: McqResponse;
@@ -14,7 +18,7 @@ export interface QuestionDetailData {
 @Component({
   selector: 'app-question-detail-dialog',
   standalone: true,
-  imports: [MatDialogModule, DatePipe],
+  imports: [MatDialogModule, DatePipe, FormsModule, ButtonDirective],
   template: `
     <!-- Header -->
     <div class="flex items-start justify-between gap-4 px-7 pt-6 pb-4 border-b border-slate-100">
@@ -149,6 +153,68 @@ export interface QuestionDetailData {
           </div>
         }
       </div>
+
+      <!-- Discussion (review thread between creator & reviewer/admins) -->
+      <div class="mt-6 pt-4 border-t border-slate-100">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-icons text-[18px] text-indigo-400" aria-hidden="true">forum</span>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Discussion</p>
+          @if (comments.length) {
+            <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold">{{ comments.length }}</span>
+          }
+        </div>
+
+        @if (commentsLoading) {
+          <p class="text-xs text-slate-400 pl-1">Loading discussion…</p>
+        } @else if (commentsError) {
+          <p class="text-xs text-rose-500 pl-1">{{ commentsError }}</p>
+        } @else {
+          <div class="max-h-72 overflow-y-auto pr-1 space-y-3 mb-4">
+            @if (comments.length === 0) {
+              <p class="text-xs text-slate-400 pl-1">No comments yet — start the conversation below.</p>
+            }
+            @for (c of comments; track c.id) {
+              <div class="flex flex-col animate-scale-in"
+                   [class.items-end]="isMine(c)" [class.items-start]="!isMine(c)">
+                <div class="max-w-[85%] rounded-2xl px-3.5 py-2.5 border shadow-sm"
+                     [class]="isMine(c)
+                       ? 'bg-gradient-to-br from-indigo-500 to-violet-600 border-transparent text-white rounded-br-sm'
+                       : 'bg-slate-50 border-slate-200 text-slate-700 rounded-bl-sm'">
+                  <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                    <span class="text-[11px] font-bold" [class]="isMine(c) ? 'text-white' : 'text-slate-700'">
+                      {{ isMine(c) ? 'You' : c.authorName }}
+                    </span>
+                    @if (c.authorRole) {
+                      <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide"
+                            [class]="isMine(c) ? 'bg-white/20 text-white' : roleChipClass(c.authorRole)">
+                        {{ c.authorRole }}
+                      </span>
+                    }
+                    <span class="text-[10px]" [class]="isMine(c) ? 'text-indigo-100' : 'text-slate-400'">
+                      · {{ relativeTime(c.createdAt) }}
+                    </span>
+                  </div>
+                  <p class="text-sm leading-snug whitespace-pre-line break-words">{{ c.body }}</p>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Composer -->
+          <div class="flex items-end gap-2">
+            <textarea [(ngModel)]="draft" rows="2" maxlength="2000"
+                      (keydown.enter)="onComposerEnter($event)"
+                      [disabled]="sending"
+                      placeholder="Write a message…"
+                      class="field flex-1 px-3 py-2 !bg-slate-50 focus:!bg-white text-slate-800 text-sm resize-none"></textarea>
+            <button type="button" appBtn="primary" size="icon"
+                    [disabled]="!draft.trim() || sending"
+                    (click)="send()" aria-label="Send comment">
+              <span class="material-icons text-[18px]" aria-hidden="true">{{ sending ? 'hourglass_empty' : 'send' }}</span>
+            </button>
+          </div>
+        }
+      </div>
     </mat-dialog-content>
 
     <div class="flex justify-end px-7 py-4 border-t border-slate-100 bg-slate-50/60">
@@ -159,8 +225,10 @@ export interface QuestionDetailData {
     </div>
   `,
 })
-export class QuestionDetailDialogComponent {
+export class QuestionDetailDialogComponent implements OnInit {
   private readonly auditService = inject(AuditService);
+  private readonly commentService = inject(CommentService);
+  private readonly auth = inject(AuthService);
   data = inject<QuestionDetailData>(MAT_DIALOG_DATA);
   q = this.data.question;
 
@@ -175,8 +243,71 @@ export class QuestionDetailDialogComponent {
   history: AuditLog[] = [];
   private historyLoaded = false;
 
+  // Discussion thread — lazy-loaded once on dialog open.
+  comments: QuestionComment[] = [];
+  commentsLoading = false;
+  commentsError: string | null = null;
+  draft = '';
+  sending = false;
+  private readonly currentUserId = this.auth.currentUserId();
+
+  ngOnInit(): void {
+    this.loadComments();
+  }
+
   optionLabel(i: number): string {
     return String.fromCharCode(65 + i);
+  }
+
+  /** A comment is "mine" when its author is the signed-in user. */
+  isMine(c: QuestionComment): boolean {
+    return this.currentUserId != null && c.authorName === this.auth.currentUser()?.fullName;
+  }
+
+  roleChipClass(role: string): string {
+    return role === 'ADMIN'
+      ? 'bg-violet-100 text-violet-700'
+      : 'bg-indigo-100 text-indigo-700';
+  }
+
+  private loadComments(): void {
+    this.commentsLoading = true;
+    this.commentsError = null;
+    this.commentService.getComments(this.q.id).subscribe({
+      next: list => {
+        this.comments = list;
+        this.commentsLoading = false;
+      },
+      error: () => {
+        this.commentsError = 'Could not load the discussion.';
+        this.commentsLoading = false;
+      },
+    });
+  }
+
+  /** Submit on Enter (Shift+Enter keeps inserting newlines). */
+  onComposerEnter(event: Event): void {
+    const ke = event as KeyboardEvent;
+    if (!ke.shiftKey) {
+      ke.preventDefault();
+      this.send();
+    }
+  }
+
+  send(): void {
+    const body = this.draft.trim();
+    if (!body || this.sending) return;
+    this.sending = true;
+    this.commentService.addComment(this.q.id, body).subscribe({
+      next: comment => {
+        this.comments = [...this.comments, comment];
+        this.draft = '';
+        this.sending = false;
+      },
+      error: () => {
+        this.sending = false;
+      },
+    });
   }
 
   toggleHistory(): void {
