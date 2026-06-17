@@ -54,13 +54,17 @@ spring:
       base-url: ${OPENAI_BASE_URL:https://api.groq.com/openai}
       api-key: ${OPENAI_API_KEY}
       chat:
+        # Path is overridable: OpenAI/Groq use /v1/chat/completions (default);
+        # GitHub Models uses /chat/completions (set OPENAI_COMPLETIONS_PATH=/chat/completions).
+        completions-path: ${OPENAI_COMPLETIONS_PATH:/v1/chat/completions}
         options:
           model: ${OPENAI_MODEL:llama-3.3-70b-versatile}
           temperature: 0.7
           max-tokens: 1000
       embedding:
+        embeddings-path: ${OPENAI_EMBEDDINGS_PATH:/v1/embeddings}
         options:
-          model: text-embedding-3-small
+          model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
 
 # ─────────────────────────────────────────────────────────────
 #  Level 2 — AI duplicate detection
