@@ -9,12 +9,12 @@
       <p class="text-xs text-slate-400 mt-0.5">{{ isEdit ? 'Update question details below' : 'Fill in the context, then write your question' }}</p>
     </div>
   </div>
-  <button mat-dialog-close aria-label="Close" class="self-end sm:self-auto w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+  <button mat-dialog-close aria-label="Close" class="press self-end sm:self-auto w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
     <span class="material-icons text-[20px]" aria-hidden="true">close</span>
   </button>
 </div>
 
-<mat-dialog-content class="block !p-0 !m-0 max-h-[72vh] sm:min-w-[600px] overflow-y-auto">
+<mat-dialog-content class="block !p-0 !m-0 max-h-[72vh] sm:min-w-[600px] overflow-y-auto animate-scale-in">
 
   <!-- Terminal rejection notice — question is permanently locked (Story 1.3) -->
   @if (isLocked) {
@@ -50,7 +50,7 @@
           <div class="relative">
             <select id="qf-stack" formControlName="stackId"
               (change)="onStackChange(+$any($event.target).value)"
-              class="w-full h-[42px] pl-3 pr-8 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 text-sm outline-none appearance-none transition-colors focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white">
+              class="field w-full h-[42px] pl-3 pr-8 text-sm appearance-none">
               <option [value]="null">Choose stack…</option>
               @for (s of stacks(); track s.id) {
                 <option [value]="s.id">{{ s.stackName }}</option>
@@ -65,7 +65,7 @@
           <div class="relative">
             <select id="qf-topic" formControlName="topicId"
               [attr.disabled]="topics().length === 0 ? true : null"
-              class="w-full h-[42px] pl-3 pr-8 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 text-sm outline-none appearance-none transition-colors focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white"
+              class="field w-full h-[42px] pl-3 pr-8 text-sm appearance-none"
               [class.opacity-50]="topics().length === 0"
               [class.cursor-not-allowed]="topics().length === 0">
               <option [value]="null">{{ topics().length === 0 ? 'Select stack first' : 'Choose topic…' }}</option>
@@ -117,7 +117,7 @@
         [attr.disabled]="!step1Complete ? true : null"
         [attr.aria-invalid]="form.get('questionStem')?.invalid && form.get('questionStem')?.touched"
         placeholder="Describe a real-world scenario and ask a specific question…"
-        class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none leading-relaxed"
+        class="field w-full px-4 py-3 text-sm resize-none leading-relaxed"
         [class.bg-slate-50]="step1Complete"
         [class.bg-slate-100]="!step1Complete"
         [class.cursor-not-allowed]="!step1Complete"></textarea>
@@ -200,7 +200,7 @@
             <!-- Right: Correct badge + Remove -->
             <div class="flex items-center gap-1.5 flex-shrink-0">
               @if (isCorrect(i)) {
-                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span class="animate-pop text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
                   Correct
                 </span>
               }

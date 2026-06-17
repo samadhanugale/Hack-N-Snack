@@ -12,22 +12,26 @@ import { FilterOption } from '../../utils/table-ops';
   imports: [MatMenuModule],
   template: `
     <button type="button" [matMenuTriggerFor]="menu" (click)="$event.stopPropagation()"
-            class="inline-flex items-center justify-center w-5 h-5 rounded transition-colors"
-            [class.text-indigo-600]="selected != null"
-            [class.text-slate-300]="selected == null"
-            [class.hover:text-slate-500]="selected == null"
-            [attr.aria-label]="'Filter ' + label">
+            [class]="'press relative inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200 ' +
+              (selected != null ? 'text-indigo-600 bg-indigo-50 ring-1 ring-inset ring-indigo-200' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100')"
+            [attr.aria-label]="'Filter ' + label"
+            [attr.aria-pressed]="selected != null">
       <span class="material-icons text-[15px]">{{ selected != null ? 'filter_alt' : 'filter_list' }}</span>
+      @if (selected != null) {
+        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-500 ring-2 ring-white animate-pop"></span>
+      }
     </button>
 
-    <mat-menu #menu="matMenu">
-      <button mat-menu-item (click)="pick(null)">
-        <span class="material-icons text-[16px] mr-2 align-middle" [class.opacity-0]="selected != null">check</span>
+    <mat-menu #menu="matMenu" class="filter-menu">
+      <button mat-menu-item (click)="pick(null)"
+              [class]="selected == null ? '!text-indigo-600 !font-semibold' : ''">
+        <span class="material-icons text-[16px] mr-2 align-middle text-indigo-600" [class.opacity-0]="selected != null">check</span>
         <span class="align-middle">All</span>
       </button>
       @for (o of options; track o.value) {
-        <button mat-menu-item (click)="pick(o.value)">
-          <span class="material-icons text-[16px] mr-2 align-middle" [class.opacity-0]="selected !== o.value">check</span>
+        <button mat-menu-item (click)="pick(o.value)"
+                [class]="selected === o.value ? '!text-indigo-600 !font-semibold' : ''">
+          <span class="material-icons text-[16px] mr-2 align-middle text-indigo-600" [class.opacity-0]="selected !== o.value">check</span>
           <span class="align-middle">{{ o.label }}</span>
         </button>
       }

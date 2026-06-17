@@ -13,6 +13,7 @@ interface NavItem {
   route: string;
   adminOnly?: boolean;
   smeOnly?: boolean;
+  exact?: boolean;
 }
 
 @Component({
@@ -41,15 +42,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   navItems: NavItem[] = [
-    { icon: 'dashboard',     label: 'Dashboard',       route: '/dashboard' },
-    { icon: 'quiz',          label: 'My Questions',    route: '/questions' },
-    { icon: 'upload_file',   label: 'Bulk Upload',     route: '/bulk-upload' },
+    { icon: 'dashboard',     label: 'Dashboard',       route: '/dashboard',       exact: true },
+    { icon: 'quiz',          label: 'Questions',       route: '/questions' },
     { icon: 'rate_review',   label: 'Pending Reviews', route: '/reviews' },
-    { icon: 'library_books', label: 'Question Bank',   route: '/admin/questions', adminOnly: true },
-    { icon: 'bar_chart',     label: 'Analytics',       route: '/admin/analytics', adminOnly: true },
-    { icon: 'group',         label: 'SME Management',  route: '/admin/smes',      adminOnly: true },
-    { icon: 'layers',        label: 'Stack Management', route: '/admin/stacks',    adminOnly: true },
-    { icon: 'admin_panel_settings', label: 'Super Admin', route: '/admin/users',  adminOnly: true }
+    { icon: 'insights',      label: 'Analytics',       route: '/admin/analytics', adminOnly: true },
+    { icon: 'admin_panel_settings', label: 'Administration', route: '/admin', adminOnly: true, exact: true }
   ];
 
   visibleItems = computed(() =>

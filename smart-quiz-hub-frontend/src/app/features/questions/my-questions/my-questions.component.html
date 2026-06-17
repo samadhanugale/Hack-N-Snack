@@ -36,52 +36,52 @@
   </div>
 
   <!-- Analytics strip — click a card to filter the table -->
-  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-7">
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-7 stagger">
     <button (click)="filterByStatus(null)"
-            class="text-left bg-white border rounded-2xl px-4 py-3.5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
-            [class.border-indigo-300]="filters()['status'] === null" [class.border-slate-200]="filters()['status'] !== null">
+            class="text-left card card-i press px-4 py-3.5"
+            [class.border-indigo-300]="filters()['status'] === null">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total</p>
-      <p class="text-2xl font-extrabold text-slate-900 mt-0.5">{{ stats().total }}</p>
+      <p class="text-2xl font-extrabold text-slate-900 mt-0.5"><span [appCountUp]="stats().total">0</span></p>
     </button>
     <button (click)="filterByStatus('DRAFT')"
-            class="text-left bg-white border rounded-2xl px-4 py-3.5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
-            [class.border-slate-400]="filters()['status'] === 'DRAFT'" [class.border-slate-200]="filters()['status'] !== 'DRAFT'">
+            class="text-left card card-i press px-4 py-3.5"
+            [class.border-slate-400]="filters()['status'] === 'DRAFT'">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Drafts</p>
-      <p class="text-2xl font-extrabold text-slate-600 mt-0.5">{{ stats().drafts }}</p>
+      <p class="text-2xl font-extrabold text-slate-600 mt-0.5"><span [appCountUp]="stats().drafts">0</span></p>
     </button>
     <button (click)="filterByStatus('UNDER_REVIEW')"
-            class="text-left bg-white border rounded-2xl px-4 py-3.5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
-            [class.border-blue-300]="filters()['status'] === 'UNDER_REVIEW'" [class.border-slate-200]="filters()['status'] !== 'UNDER_REVIEW'">
+            class="text-left card card-i press px-4 py-3.5"
+            [class.border-blue-300]="filters()['status'] === 'UNDER_REVIEW'">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">In Review</p>
-      <p class="text-2xl font-extrabold text-blue-600 mt-0.5">{{ stats().inReview }}</p>
+      <p class="text-2xl font-extrabold text-blue-600 mt-0.5"><span [appCountUp]="stats().inReview">0</span></p>
     </button>
     <button (click)="filterByStatus('MODIFICATION_REQUESTED')"
-            class="text-left bg-white border rounded-2xl px-4 py-3.5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
-            [class.border-violet-300]="filters()['status'] === 'MODIFICATION_REQUESTED'" [class.border-slate-200]="filters()['status'] !== 'MODIFICATION_REQUESTED'">
+            class="text-left card card-i press px-4 py-3.5"
+            [class.border-violet-300]="filters()['status'] === 'MODIFICATION_REQUESTED'">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Needs Changes</p>
-      <p class="text-2xl font-extrabold text-violet-600 mt-0.5">{{ stats().needsChanges }}</p>
+      <p class="text-2xl font-extrabold text-violet-600 mt-0.5"><span [appCountUp]="stats().needsChanges">0</span></p>
     </button>
     <button (click)="filterByStatus('APPROVED')"
-            class="text-left bg-white border rounded-2xl px-4 py-3.5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
-            [class.border-emerald-300]="filters()['status'] === 'APPROVED'" [class.border-slate-200]="filters()['status'] !== 'APPROVED'">
+            class="text-left card card-i press px-4 py-3.5"
+            [class.border-emerald-300]="filters()['status'] === 'APPROVED'">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Approved</p>
-      <p class="text-2xl font-extrabold text-emerald-600 mt-0.5">{{ stats().approved }}</p>
+      <p class="text-2xl font-extrabold text-emerald-600 mt-0.5"><span [appCountUp]="stats().approved">0</span></p>
     </button>
     <div class="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl px-4 py-3.5 shadow-lg shadow-indigo-500/25">
       <p class="text-[11px] font-bold text-white/70 uppercase tracking-wider">Approval Rate</p>
-      <p class="text-2xl font-extrabold text-white mt-0.5">{{ stats().approvalRate }}%</p>
+      <p class="text-2xl font-extrabold text-white mt-0.5"><span [appCountUp]="stats().approvalRate">0</span>%</p>
     </div>
   </div>
 
   @if (loading()) {
-    <div class="flex items-center justify-center py-32">
-      <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
+    <div class="card p-5 stagger">
+      <div class="skeleton h-9 w-full mb-3"></div>
+      @for (n of [1,2,3,4,5,6]; track n) {
+        <div class="skeleton h-12 w-full mb-2.5"></div>
+      }
     </div>
   } @else if (allRows().length === 0) {
-    <div class="bg-white border border-slate-200 rounded-2xl py-20 flex flex-col items-center gap-4 text-center">
+    <div class="card py-20 flex flex-col items-center gap-4 text-center animate-fade-up">
       <div class="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center">
         <span class="material-icons text-indigo-400 text-3xl">quiz</span>
       </div>
@@ -92,7 +92,7 @@
     </div>
   } @else {
     <!-- Table -->
-    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+    <div class="card overflow-hidden animate-fade-up">
      <div class="overflow-x-auto">
       <table class="w-full text-sm min-w-[760px]">
         <caption class="sr-only">Your submitted questions with stack, difficulty, status and actions</caption>
@@ -145,22 +145,22 @@
               <td class="px-5 py-4">
                 <div class="flex items-center gap-1">
                   <button (click)="openView(q)" matTooltip="View" aria-label="View question"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 enabled:hover:bg-slate-100 enabled:hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                          class="press w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 enabled:hover:bg-slate-100 enabled:hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                     <span class="material-icons text-[16px]" aria-hidden="true">visibility</span>
                   </button>
                   <button (click)="openEdit(q)" matTooltip="Edit" aria-label="Edit question"
                           [disabled]="!(q.status === 'DRAFT' || q.status === 'READY_FOR_REVIEW' || q.status === 'MODIFICATION_REQUESTED')"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-indigo-500 enabled:hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                          class="press w-8 h-8 rounded-lg flex items-center justify-center text-indigo-500 enabled:hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                     <span class="material-icons text-[16px]" aria-hidden="true">edit</span>
                   </button>
                   <button (click)="submitForReview(q)" matTooltip="Submit for Review" aria-label="Submit for review"
                           [disabled]="!(q.status === 'DRAFT' || q.status === 'MODIFICATION_REQUESTED')"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-amber-500 enabled:hover:bg-amber-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                          class="press w-8 h-8 rounded-lg flex items-center justify-center text-amber-500 enabled:hover:bg-amber-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                     <span class="material-icons text-[16px]" aria-hidden="true">send</span>
                   </button>
                   <button (click)="delete(q)" matTooltip="Delete" aria-label="Delete question"
                           [disabled]="!(q.status === 'DRAFT' || q.status === 'READY_FOR_REVIEW')"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-rose-500 enabled:hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                          class="press w-8 h-8 rounded-lg flex items-center justify-center text-rose-500 enabled:hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                     <span class="material-icons text-[16px]" aria-hidden="true">delete</span>
                   </button>
                 </div>

@@ -17,7 +17,7 @@ export interface AssignReviewerDialogData {
   standalone: true,
   imports: [MatDialogModule, MatButtonModule, FormsModule],
   template: `
-    <div mat-dialog-title class="px-6 pt-6 pb-0">
+    <div mat-dialog-title class="px-6 pt-6 pb-0 animate-scale-in">
       <h2 class="text-xl font-bold text-slate-900">Assign Reviewer</h2>
       <p class="text-slate-400 text-sm mt-1">Search and select an SME to review</p>
     </div>
@@ -52,10 +52,10 @@ export interface AssignReviewerDialogData {
         <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
         <input [(ngModel)]="searchQuery"
                placeholder="Search by name or enterprise ID…"
-               class="w-full pl-10 pr-9 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all bg-white" />
+               class="field w-full pl-10 pr-9 py-2.5 text-sm text-slate-800" />
         @if (searchQuery) {
           <button (click)="searchQuery = ''"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                  class="press absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
             <span class="material-icons text-[16px]">close</span>
           </button>
         }
@@ -118,7 +118,7 @@ export interface AssignReviewerDialogData {
       </div>
 
       @if (selectedSme) {
-        <div class="flex items-center gap-2 mt-3 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl">
+        <div class="animate-pop flex items-center gap-2 mt-3 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl">
           <span class="material-icons text-indigo-500 text-[16px]">person_check</span>
           <p class="text-sm text-indigo-700 font-medium">
             <span class="font-bold">{{ selectedSme!.fullName }}</span> will be assigned as reviewer
@@ -131,11 +131,11 @@ export interface AssignReviewerDialogData {
 
     <mat-dialog-actions class="px-6 py-4 flex justify-end gap-3 border-t border-slate-100">
       <button mat-dialog-close
-              class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+              class="press px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
         Cancel
       </button>
       <button [disabled]="!selectedId" (click)="dialogRef.close(selectedId)"
-              class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 disabled:opacity-60 disabled:cursor-not-allowed transition-all">
+              class="press flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 disabled:opacity-60 disabled:cursor-not-allowed transition-all">
         <span class="material-icons text-[17px]">person_add</span>
         {{ isBulk ? 'Assign to ' + data.bulkCount + ' Questions' : 'Assign Reviewer' }}
       </button>

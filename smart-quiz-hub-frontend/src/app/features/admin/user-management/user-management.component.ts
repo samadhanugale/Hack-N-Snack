@@ -10,6 +10,7 @@ import { SnackService } from '../../../core/services/snack.service';
 import { ButtonDirective } from '../../../shared/components/button/button.directive';
 import { TableHeaderCellComponent } from '../../../shared/components/table-header-cell/table-header-cell.component';
 import { RelativeTimePipe } from '../../../shared/pipes/relative-time.pipe';
+import { CountUpDirective } from '../../../shared/directives/count-up.directive';
 import { applyFilters, applySort, FilterOption, SortState } from '../../../shared/utils/table-ops';
 import { UserFormDialogComponent } from './user-form-dialog.component';
 
@@ -30,7 +31,7 @@ function userValue(u: AdminUser, key: string): string {
   standalone: true,
   imports: [
     FormsModule, DatePipe, MatDialogModule, MatTooltipModule,
-    ButtonDirective, TableHeaderCellComponent, RelativeTimePipe,
+    ButtonDirective, TableHeaderCellComponent, RelativeTimePipe, CountUpDirective,
   ],
   templateUrl: './user-management.component.html',
 })

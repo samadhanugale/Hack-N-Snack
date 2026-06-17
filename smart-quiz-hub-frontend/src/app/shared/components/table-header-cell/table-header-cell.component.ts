@@ -12,22 +12,24 @@ import { FilterOption, SortState } from '../../utils/table-ops';
   standalone: true,
   imports: [ColumnFilterComponent],
   template: `
-    <div class="flex items-center gap-1" [class.justify-end]="align === 'right'">
+    <div class="flex items-center gap-0.5" [class.justify-end]="align === 'right'">
       @if (sortKey) {
         <button type="button" (click)="toggleSort()"
-                class="inline-flex items-center gap-1 select-none text-[11px] font-bold uppercase tracking-wider transition-colors"
-                [class.text-indigo-600]="isSorted"
-                [class.text-slate-500]="!isSorted"
-                [class.hover:text-slate-700]="!isSorted">
-          {{ label }}
-          <span class="material-icons text-[14px]"
-                [class.text-indigo-600]="isSorted"
-                [class.text-slate-300]="!isSorted">
-            {{ isSorted ? (dir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                [attr.aria-label]="'Sort by ' + label + (isSorted ? (dir === 'asc' ? ', ascending' : ', descending') : '')"
+                [class]="'group inline-flex items-center gap-1.5 select-none text-[11px] font-bold uppercase tracking-wider rounded-lg px-2 py-1 -mx-1 transition-all duration-200 ' +
+                  (isSorted ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100')">
+          <span>{{ label }}</span>
+          <span class="inline-flex items-center justify-center w-4 h-4 rounded-md transition-colors"
+                [class]="isSorted ? 'bg-indigo-100 text-indigo-600' : 'text-slate-300 group-hover:text-slate-400'">
+            <span class="material-icons text-[13px]"
+                  [class.rotate-180]="isSorted && dir === 'desc'"
+                  style="transition: transform .25s cubic-bezier(0.22,1,0.36,1)">
+              {{ isSorted ? 'arrow_upward' : 'unfold_more' }}
+            </span>
           </span>
         </button>
       } @else {
-        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ label }}</span>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-1">{{ label }}</span>
       }
 
       @if (filterOptions) {

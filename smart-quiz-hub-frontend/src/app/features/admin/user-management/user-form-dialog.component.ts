@@ -14,7 +14,7 @@ export interface UserFormData { user?: AdminUser; }
   standalone: true,
   imports: [FormsModule, MatDialogModule, ButtonDirective],
   template: `
-    <div class="flex items-center justify-between px-7 pt-6 pb-4 border-b border-slate-100">
+    <div class="flex items-center justify-between px-7 pt-6 pb-4 border-b border-slate-100 animate-scale-in">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
           <span class="material-icons text-white text-[20px]">{{ isEdit ? 'manage_accounts' : 'person_add' }}</span>
@@ -24,7 +24,7 @@ export interface UserFormData { user?: AdminUser; }
           <p class="text-xs text-slate-400 mt-0.5">{{ isEdit ? 'Update profile, role & stacks' : 'Create an SME or admin account' }}</p>
         </div>
       </div>
-      <button mat-dialog-close class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+      <button mat-dialog-close class="press w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
         <span class="material-icons text-[20px]">close</span>
       </button>
     </div>
@@ -35,7 +35,7 @@ export interface UserFormData { user?: AdminUser; }
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.04em] mb-1.5">Enterprise ID <span class="text-rose-400">*</span></label>
-            <input [(ngModel)]="form.enterpriseId" [disabled]="isEdit" class="w-full h-[42px] px-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 text-sm outline-none transition-colors focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" [class.opacity-60]="isEdit"
+            <input [(ngModel)]="form.enterpriseId" [disabled]="isEdit" class="field w-full h-[42px] px-3 !bg-slate-50 focus:!bg-white text-slate-800 text-sm" [class.opacity-60]="isEdit"
                    placeholder="e.g. jane.doe" />
           </div>
           <div>
@@ -54,18 +54,18 @@ export interface UserFormData { user?: AdminUser; }
 
         <div>
           <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.04em] mb-1.5">Full Name <span class="text-rose-400">*</span></label>
-          <input [(ngModel)]="form.fullName" class="w-full h-[42px] px-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 text-sm outline-none transition-colors focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" placeholder="Jane Doe" />
+          <input [(ngModel)]="form.fullName" class="field w-full h-[42px] px-3 !bg-slate-50 focus:!bg-white text-slate-800 text-sm" placeholder="Jane Doe" />
         </div>
 
         <div>
           <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.04em] mb-1.5">Email <span class="text-rose-400">*</span></label>
-          <input [(ngModel)]="form.email" type="email" class="w-full h-[42px] px-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 text-sm outline-none transition-colors focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" placeholder="jane.doe@accenture.com" />
+          <input [(ngModel)]="form.email" type="email" class="field w-full h-[42px] px-3 !bg-slate-50 focus:!bg-white text-slate-800 text-sm" placeholder="jane.doe@accenture.com" />
         </div>
 
         @if (!isEdit) {
           <div>
             <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.04em] mb-1.5">Temporary Password <span class="text-rose-400">*</span></label>
-            <input [(ngModel)]="form.password" type="text" class="w-full h-[42px] px-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 text-sm outline-none transition-colors focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" placeholder="Min 8 characters" />
+            <input [(ngModel)]="form.password" type="text" class="field w-full h-[42px] px-3 !bg-slate-50 focus:!bg-white text-slate-800 text-sm" placeholder="Min 8 characters" />
             <p class="text-[11px] text-slate-400 mt-1">The user can change it after first login.</p>
           </div>
         }

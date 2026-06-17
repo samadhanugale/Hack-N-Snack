@@ -26,14 +26,14 @@ export interface QuestionDetailData {
           <p class="text-xs text-slate-400 mt-0.5">Read-only view</p>
         </div>
       </div>
-      <button mat-dialog-close aria-label="Close" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all flex-shrink-0">
+      <button mat-dialog-close aria-label="Close" class="press w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all flex-shrink-0">
         <span class="material-icons text-[20px]" aria-hidden="true">close</span>
       </button>
     </div>
 
-    <mat-dialog-content class="max-w-full">
+    <mat-dialog-content class="max-w-full animate-scale-in">
       <!-- Meta chips -->
-      <div class="flex items-center gap-2 flex-wrap mb-5 mt-1">
+      <div class="flex items-center gap-2 flex-wrap mb-5 mt-1 stagger">
         <span [class]="diffBadge(q.difficulty)">{{ q.difficulty }}</span>
         <span class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-100">{{ q.stackName }}</span>
         <span class="px-2.5 py-1 rounded-full bg-cyan-50 text-cyan-700 text-xs font-semibold border border-cyan-100">{{ q.topicName }}</span>

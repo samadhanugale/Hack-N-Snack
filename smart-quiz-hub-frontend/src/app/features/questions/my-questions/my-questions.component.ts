@@ -15,6 +15,7 @@ import { AiGenerateDialogComponent } from '../ai-generate-dialog/ai-generate-dia
 import { RelativeTimePipe } from '../../../shared/pipes/relative-time.pipe';
 import { TableHeaderCellComponent } from '../../../shared/components/table-header-cell/table-header-cell.component';
 import { ButtonDirective } from '../../../shared/components/button/button.directive';
+import { CountUpDirective } from '../../../shared/directives/count-up.directive';
 import { applyFilters, applySort, distinctOptions, SortState } from '../../../shared/utils/table-ops';
 import { mcqColumnValue, STATUS_FILTER_OPTIONS, DIFFICULTY_FILTER_OPTIONS } from '../../../shared/utils/mcq-columns';
 import { statusBadgeClass, difficultyBadgeClass, statusLabel } from '../../../shared/utils/badge';
@@ -24,7 +25,7 @@ import { statusBadgeClass, difficultyBadgeClass, statusLabel } from '../../../sh
   standalone: true,
   imports: [
     MatButtonModule, MatIconModule, MatMenuModule, MatDialogModule, MatTooltipModule,
-    DatePipe, RelativeTimePipe, TableHeaderCellComponent, ButtonDirective
+    DatePipe, RelativeTimePipe, TableHeaderCellComponent, ButtonDirective, CountUpDirective
   ],
   templateUrl: './my-questions.component.html',
 })

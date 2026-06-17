@@ -12,27 +12,34 @@ export type ButtonVariant =
 
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm';
 
+// Motion-design buttons: vibrant gradients that sweep on hover, glossy inset highlight,
+// colored glow, lift + tactile press.
 const BASE =
-  'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all ' +
-  'whitespace-nowrap select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none';
+  'relative inline-flex items-center justify-center gap-2 font-semibold rounded-xl ' +
+  'transition-all duration-300 ease-out whitespace-nowrap select-none ' +
+  'hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] ' +
+  'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:translate-y-0 disabled:active:scale-100';
 
 const SIZES: Record<ButtonSize, string> = {
-  sm:        'h-8 px-3 text-xs',
-  md:        'h-10 px-4 text-sm',
-  lg:        'h-11 px-5 text-sm',
-  icon:      'h-9 w-9 p-0 rounded-lg',
+  sm:        'h-9 px-4 text-xs',
+  md:        'h-11 px-5 text-sm',
+  lg:        'h-12 px-6 text-[15px]',
+  icon:      'h-10 w-10 p-0 rounded-xl',
   'icon-sm': 'h-8 w-8 p-0 rounded-lg',
 };
 
+// Glossy top highlight + animated gradient sweep shared by all filled (gradient) variants.
+const FILL = 'ring-1 ring-inset ring-white/20 text-white bg-[length:200%_auto] bg-left hover:bg-right';
+
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary:   'text-white bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5',
-  secondary: 'text-slate-700 bg-white border border-slate-200 shadow-sm hover:bg-slate-50',
-  success:   'text-white bg-gradient-to-r from-emerald-500 to-green-600 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5',
-  danger:    'text-white bg-gradient-to-r from-rose-500 to-red-600 shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 hover:-translate-y-0.5',
-  warning:   'text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100',
-  accent:    'text-white bg-gradient-to-r from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 hover:-translate-y-0.5',
-  soft:      'text-indigo-700 bg-indigo-50 hover:bg-indigo-100',
-  ghost:     'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
+  primary:   `${FILL} bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 shadow-lg shadow-indigo-500/40 hover:shadow-xl hover:shadow-violet-500/50`,
+  success:   `${FILL} bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/50`,
+  danger:    `${FILL} bg-gradient-to-r from-rose-500 via-red-500 to-orange-500 shadow-lg shadow-rose-500/40 hover:shadow-xl hover:shadow-rose-500/50`,
+  warning:   `${FILL} bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 shadow-lg shadow-amber-500/40 hover:shadow-xl hover:shadow-amber-500/50`,
+  accent:    `${FILL} bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 shadow-lg shadow-violet-500/40 hover:shadow-xl hover:shadow-fuchsia-500/50`,
+  secondary: 'text-slate-700 bg-white border border-slate-200 shadow-sm hover:border-indigo-300 hover:text-indigo-700 hover:shadow-md hover:shadow-indigo-500/10',
+  soft:      'text-indigo-700 bg-indigo-100/70 ring-1 ring-inset ring-indigo-200/70 hover:bg-indigo-100',
+  ghost:     'text-slate-500 bg-transparent hover:bg-slate-100 hover:text-slate-700',
 };
 
 /**

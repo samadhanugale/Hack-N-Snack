@@ -1,9 +1,9 @@
 <div class="animate-fade-up">
 
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 animate-fade-up">
     <div>
-      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Super Admin · Users</h1>
+      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Super Admin · <span class="text-gradient">Users</span></h1>
       <p class="text-slate-500 text-sm mt-1">Create and manage SMEs and admins — no DB migrations needed</p>
     </div>
     <div class="flex items-center gap-3">
@@ -19,25 +19,25 @@
   </div>
 
   <!-- Stats strip -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-    <button (click)="filterByRole(null)" class="text-left bg-white border rounded-2xl px-4 py-3.5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 stagger">
+    <button (click)="filterByRole(null)" class="card card-i text-left px-4 py-3.5 border"
             [class.border-indigo-300]="filters()['role'] === null" [class.border-slate-200]="filters()['role'] !== null">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Users</p>
-      <p class="text-2xl font-extrabold text-slate-900 mt-0.5">{{ stats().total }}</p>
+      <p class="text-2xl font-extrabold text-slate-900 mt-0.5" [appCountUp]="stats().total">0</p>
     </button>
-    <button (click)="filterByRole('ADMIN')" class="text-left bg-white border rounded-2xl px-4 py-3.5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+    <button (click)="filterByRole('ADMIN')" class="card card-i text-left px-4 py-3.5 border"
             [class.border-indigo-300]="filters()['role'] === 'ADMIN'" [class.border-slate-200]="filters()['role'] !== 'ADMIN'">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Admins</p>
-      <p class="text-2xl font-extrabold text-indigo-600 mt-0.5">{{ stats().admins }}</p>
+      <p class="text-2xl font-extrabold text-indigo-600 mt-0.5" [appCountUp]="stats().admins">0</p>
     </button>
-    <button (click)="filterByRole('SME')" class="text-left bg-white border rounded-2xl px-4 py-3.5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+    <button (click)="filterByRole('SME')" class="card card-i text-left px-4 py-3.5 border"
             [class.border-cyan-300]="filters()['role'] === 'SME'" [class.border-slate-200]="filters()['role'] !== 'SME'">
       <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">SMEs</p>
-      <p class="text-2xl font-extrabold text-cyan-600 mt-0.5">{{ stats().smes }}</p>
+      <p class="text-2xl font-extrabold text-cyan-600 mt-0.5" [appCountUp]="stats().smes">0</p>
     </button>
     <div class="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl px-4 py-3.5 shadow-lg shadow-emerald-500/25">
       <p class="text-[11px] font-bold text-white/70 uppercase tracking-wider">Active</p>
-      <p class="text-2xl font-extrabold text-white mt-0.5">{{ stats().active }}</p>
+      <p class="text-2xl font-extrabold text-white mt-0.5" [appCountUp]="stats().active">0</p>
     </div>
   </div>
 
@@ -47,18 +47,23 @@
     <input [ngModel]="search()" (ngModelChange)="search.set($event); page.set(0)"
            aria-label="Search users"
            placeholder="Search by name, email or enterprise ID…"
-           class="w-full h-10 pl-10 pr-4 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all" />
+           class="field w-full h-10 pl-10 pr-4 text-sm text-slate-700" />
   </div>
 
   @if (loading()) {
-    <div class="flex items-center justify-center py-32">
-      <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
+    <div class="card p-4 space-y-3">
+      @for (i of [1,2,3,4,5,6,7,8]; track i) {
+        <div class="flex items-center gap-4">
+          <div class="skeleton h-9 w-9 rounded-xl"></div>
+          <div class="skeleton h-4 flex-1"></div>
+          <div class="skeleton h-4 w-32"></div>
+          <div class="skeleton h-6 w-16 rounded-full"></div>
+          <div class="skeleton h-6 w-20 rounded-full"></div>
+        </div>
+      }
     </div>
   } @else {
-    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+    <div class="card overflow-hidden animate-fade-up">
       <div class="overflow-x-auto">
       <table class="w-full text-sm min-w-[820px]">
         <caption class="sr-only">SMEs and admins with their roles, status and contributions</caption>
@@ -85,7 +90,7 @@
                   <div class="min-w-0">
                     <p class="text-slate-800 font-semibold text-sm truncate flex items-center gap-1.5">
                       {{ u.fullName }}
-                      @if (isSelf(u)) { <span class="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">You</span> }
+                      @if (isSelf(u)) { <span class="animate-pop text-[10px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">You</span> }
                     </p>
                     <p class="text-slate-400 text-[11px]">Joined {{ u.createdAt | relativeTime }}</p>
                   </div>
@@ -113,22 +118,22 @@
               <td class="px-5 py-4">
                 <div class="flex items-center gap-1">
                   <button (click)="openEdit(u)" matTooltip="Edit" aria-label="Edit user"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-indigo-500 enabled:hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                          class="press w-8 h-8 rounded-lg flex items-center justify-center text-indigo-500 enabled:hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                     <span class="material-icons text-[16px]" aria-hidden="true">edit</span>
                   </button>
                   <button (click)="toggleActive(u)" [disabled]="isSelf(u)"
                           [matTooltip]="u.active ? 'Deactivate' : 'Activate'"
                           [attr.aria-label]="u.active ? 'Deactivate user' : 'Activate user'"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          class="press w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           [class]="u.active ? 'text-amber-500 enabled:hover:bg-amber-50' : 'text-emerald-500 enabled:hover:bg-emerald-50'">
                     <span class="material-icons text-[16px]" aria-hidden="true">{{ u.active ? 'toggle_on' : 'toggle_off' }}</span>
                   </button>
                   <button (click)="resetPassword(u)" matTooltip="Reset password" aria-label="Reset password"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 enabled:hover:bg-slate-100 enabled:hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                          class="press w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 enabled:hover:bg-slate-100 enabled:hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                     <span class="material-icons text-[16px]" aria-hidden="true">lock_reset</span>
                   </button>
                   <button (click)="delete(u)" [disabled]="isSelf(u)" matTooltip="Delete" aria-label="Delete user"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center text-rose-500 enabled:hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                          class="press w-8 h-8 rounded-lg flex items-center justify-center text-rose-500 enabled:hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                     <span class="material-icons text-[16px]" aria-hidden="true">delete</span>
                   </button>
                 </div>

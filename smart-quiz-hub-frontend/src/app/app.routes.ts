@@ -23,7 +23,7 @@ export const routes: Routes = [
       {
         path: 'questions',
         loadComponent: () =>
-          import('./features/questions/my-questions/my-questions.component').then(m => m.MyQuestionsComponent)
+          import('./features/questions/questions-hub/questions-hub.component').then(m => m.QuestionsHubComponent)
       },
       {
         path: 'bulk-upload',
@@ -36,10 +36,10 @@ export const routes: Routes = [
           import('./features/reviews/pending-reviews/pending-reviews.component').then(m => m.PendingReviewsComponent)
       },
       {
-        path: 'admin/questions',
+        path: 'admin',
         canActivate: [adminGuard],
         loadComponent: () =>
-          import('./features/admin/question-bank/question-bank.component').then(m => m.QuestionBankComponent)
+          import('./features/admin/admin-hub/admin-hub.component').then(m => m.AdminHubComponent)
       },
       {
         path: 'admin/analytics',
@@ -47,24 +47,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent)
       },
-      {
-        path: 'admin/smes',
-        canActivate: [adminGuard],
-        loadComponent: () =>
-          import('./features/admin/sme-management/sme-management.component').then(m => m.SmeManagementComponent)
-      },
-      {
-        path: 'admin/stacks',
-        canActivate: [adminGuard],
-        loadComponent: () =>
-          import('./features/admin/stack-management/stack-management.component').then(m => m.StackManagementComponent)
-      },
-      {
-        path: 'admin/users',
-        canActivate: [adminGuard],
-        loadComponent: () =>
-          import('./features/admin/user-management/user-management.component').then(m => m.UserManagementComponent)
-      }
+      // ── Legacy paths → redirect to the consolidated screens ──
+      { path: 'admin/questions', redirectTo: 'questions', pathMatch: 'full' },
+      { path: 'admin/users',     redirectTo: 'admin',     pathMatch: 'full' },
+      { path: 'admin/stacks',    redirectTo: 'admin',     pathMatch: 'full' },
+      { path: 'admin/smes',      redirectTo: 'admin/analytics', pathMatch: 'full' }
     ]
   },
   { path: '**', redirectTo: 'dashboard' }

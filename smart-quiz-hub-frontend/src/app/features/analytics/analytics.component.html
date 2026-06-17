@@ -1,155 +1,341 @@
-<div class="animate-fade-up">
+<div>
 
-  <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+  <!-- Page header -->
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6 animate-fade-up">
     <div>
-      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Analytics</h1>
-      <p class="text-slate-500 text-sm mt-1">System-wide question metrics and reviewer workload</p>
+      <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+        <span class="material-icons text-indigo-600" aria-hidden="true">insights</span>
+        Analytics
+      </h1>
+      <p class="text-slate-500 text-sm mt-1">Insights across the whole platform, your people and your question bank</p>
     </div>
 
-    <!-- Date-range filter (Story 2.3) -->
-    <div class="flex flex-wrap items-end gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
-      <div class="flex flex-col">
-        <label for="analytics-from" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">From</label>
-        <input id="analytics-from" type="date" [value]="startDate() ?? ''" (change)="startDate.set($any($event.target).value || null)"
-               class="h-9 px-2 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-indigo-500" />
+    <!-- Date range -->
+    <div class="card p-2 flex flex-wrap items-end gap-2">
+      <div class="px-1">
+        <label for="an-from" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">From</label>
+        <input id="an-from" type="date" class="field px-3 py-2 text-sm"
+               [value]="startDate() ?? ''" (change)="startDate.set($any($event.target).value || null)" />
       </div>
-      <div class="flex flex-col">
-        <label for="analytics-to" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">To</label>
-        <input id="analytics-to" type="date" [value]="endDate() ?? ''" (change)="endDate.set($any($event.target).value || null)"
-               class="h-9 px-2 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-indigo-500" />
+      <div class="px-1">
+        <label for="an-to" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">To</label>
+        <input id="an-to" type="date" class="field px-3 py-2 text-sm"
+               [value]="endDate() ?? ''" (change)="endDate.set($any($event.target).value || null)" />
       </div>
-      <button (click)="applyRange()" appBtn="primary">Apply</button>
+      <button appBtn="primary" size="sm" (click)="applyRange()">Apply</button>
       @if (hasRange) {
-        <button (click)="resetRange()" appBtn="secondary">Reset</button>
+        <button appBtn="ghost" size="sm" (click)="resetRange()">Reset</button>
       }
     </div>
   </div>
 
+  <!-- Tabs -->
+  <div class="card p-1.5 inline-flex gap-1 mb-6 animate-fade-up" role="tablist" aria-label="Analytics sections">
+    @for (t of [{id:'global',label:'Global',icon:'public'},{id:'users',label:'Users',icon:'groups'},{id:'questions',label:'Questions',icon:'quiz'}]; track t.id) {
+      <button type="button" role="tab" [attr.aria-selected]="tab() === t.id" (click)="setTab($any(t.id))"
+              [class]="'press inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ' +
+                       (tab() === t.id ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-50')">
+        <span class="material-icons text-[18px]" aria-hidden="true">{{ t.icon }}</span>
+        <span>{{ t.label }}</span>
+      </button>
+    }
+  </div>
+
   @if (loading()) {
-    <div class="flex items-center justify-center py-40" role="status" aria-label="Loading analytics">
-      <svg class="animate-spin h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-      </svg>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <div class="card p-6"><div class="skeleton h-5 w-32 mb-4"></div><div class="skeleton h-40 w-full rounded-2xl"></div></div>
+      }
     </div>
   } @else {
 
-    <!-- KPI strip -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Questions</p>
-        <p class="text-4xl font-extrabold text-slate-900">{{ totalQuestions() }}</p>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Approved</p>
-        <p class="text-4xl font-extrabold text-emerald-600">{{ approvedCount() }}</p>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Awaiting Review</p>
-        <p class="text-4xl font-extrabold text-amber-500">{{ pendingCount() }}</p>
-      </div>
-    </div>
-
-    <!-- Question performance (selected range) — Story 2.2 -->
-    @if (questionAnalytics(); as qa) {
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-8">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-          <h2 class="font-semibold text-slate-800">Question Performance</h2>
-          <span class="text-xs text-slate-400">{{ hasRange ? 'Selected range' : 'All time' }}</span>
+    <!-- ════════════════ GLOBAL ════════════════ -->
+    @if (tab() === 'global') {
+      <div class="space-y-5">
+        <!-- KPIs -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 stagger">
+          <div class="card p-5">
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Total Questions</p>
+            <p class="text-3xl font-extrabold text-indigo-600 mt-1" [appCountUp]="totalQuestions()">0</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Approved</p>
+            <p class="text-3xl font-extrabold text-emerald-600 mt-1" [appCountUp]="approvedCount()">0</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Pending</p>
+            <p class="text-3xl font-extrabold text-amber-500 mt-1" [appCountUp]="pendingCount()">0</p>
+          </div>
+          <div class="card p-5 relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-indigo-500/10 blur-xl"></div>
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Approval Rate</p>
+            <p class="text-3xl font-extrabold text-gradient mt-1"><span [appCountUp]="globalApprovalRate()" suffix="%">0%</span></p>
+          </div>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div>
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">In Range</p>
-            <p class="text-2xl font-extrabold text-slate-900">{{ qa.total }}</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <!-- Weekly trend -->
+          <div class="card p-6 lg:col-span-2 animate-fade-up">
+            <h3 class="text-sm font-extrabold text-slate-800 mb-1">Questions created over time</h3>
+            <p class="text-xs text-slate-400 mb-4">Weekly trend</p>
+            @if (hasTrend()) {
+              <svg viewBox="0 0 300 100" preserveAspectRatio="none" class="w-full h-44" role="img" aria-label="Weekly question creation trend">
+                <defs>
+                  <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#6366f1" stop-opacity="0.28" />
+                    <stop offset="100%" stop-color="#6366f1" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <path [attr.d]="trendArea()" fill="url(#trendFill)" class="animate-fade-in" />
+                <polyline [attr.points]="trendLine()" fill="none" stroke="#6366f1" stroke-width="2.5"
+                          stroke-linecap="round" stroke-linejoin="round" class="draw" style="--len:1200;stroke-dasharray:1200" />
+                @for (p of trendPoints(); track $index) {
+                  <circle [attr.cx]="p.x" [attr.cy]="p.y" r="3" fill="#fff" stroke="#6366f1" stroke-width="2" class="animate-pop" />
+                }
+              </svg>
+              <div class="flex justify-between text-[10px] text-slate-400 mt-2">
+                @for (l of trendLabels(); track $index) { <span>{{ l | slice:5 }}</span> }
+              </div>
+            } @else {
+              <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+                <span class="material-icons text-4xl mb-2" aria-hidden="true">show_chart</span>
+                <span class="text-sm">No trend data for this range</span>
+              </div>
+            }
           </div>
-          <div>
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Approval Rate</p>
-            <p class="text-2xl font-extrabold text-emerald-600">{{ qa.approvalRate }}%</p>
-            <p class="text-[10px] text-slate-400 mt-0.5">{{ qa.approvedCount }} approved · {{ qa.rejectedCount }} rejected</p>
+
+          <!-- Status donut -->
+          <div class="card p-6 animate-fade-up">
+            <h3 class="text-sm font-extrabold text-slate-800 mb-4">By Status</h3>
+            <ng-container *ngTemplateOutlet="donutTpl; context: { segs: donut(overview()?.byStatus, 'status'), center: totalQuestions() }"></ng-container>
           </div>
-          <div>
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Approved</p>
-            <p class="text-2xl font-extrabold text-indigo-600">{{ qa.approvedCount }}</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- By stack bars -->
+          <div class="card p-6 animate-fade-up">
+            <h3 class="text-sm font-extrabold text-slate-800 mb-4">By Technology Stack</h3>
+            <ng-container *ngTemplateOutlet="barsTpl; context: { rows: bars(overview()?.byStack, 'stack') }"></ng-container>
           </div>
-          <div>
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Avg AI Similarity</p>
-            <p class="text-2xl font-extrabold text-slate-700">{{ qa.avgSimilarityPercent !== null ? qa.avgSimilarityPercent + '%' : '—' }}</p>
+          <!-- By difficulty donut -->
+          <div class="card p-6 animate-fade-up">
+            <h3 class="text-sm font-extrabold text-slate-800 mb-4">By Difficulty</h3>
+            <ng-container *ngTemplateOutlet="donutTpl; context: { segs: donut(overview()?.byDifficulty, 'diff'), center: totalQuestions() }"></ng-container>
           </div>
         </div>
       </div>
     }
 
-    <!-- Charts grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-
-      <!-- Status doughnut -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <h2 class="font-semibold text-slate-800 mb-4">Questions by Status</h2>
-        <div class="flex justify-center">
-          <div style="width:260px; height:260px">
-            <canvas #statusChart></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Difficulty pie -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <h2 class="font-semibold text-slate-800 mb-4">Questions by Difficulty</h2>
-        <div class="flex justify-center">
-          <div style="width:260px; height:260px">
-            <canvas #difficultyChart></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Weekly trend (full width) -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm lg:col-span-2">
-        <h2 class="font-semibold text-slate-800 mb-4">Creation Trend</h2>
-        <canvas #trendChart style="max-height:220px"></canvas>
-      </div>
-
-      <!-- Stack bar (full width) -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm lg:col-span-2">
-        <h2 class="font-semibold text-slate-800 mb-4">Questions per Stack</h2>
-        <canvas #stackChart style="max-height:280px"></canvas>
-      </div>
-    </div>
-
-    <!-- Reviewer workload table -->
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100">
-        <h2 class="font-semibold text-slate-800">Reviewer Workload</h2>
-        <p class="text-xs text-slate-400 mt-0.5">Questions currently UNDER_REVIEW per reviewer</p>
-      </div>
-      @if (workload().length === 0) {
-        <div class="flex flex-col items-center py-12 text-slate-400 gap-2">
-          <span class="material-icons text-3xl" aria-hidden="true">inbox</span>
-          <span class="text-sm">No active review assignments</span>
-        </div>
-      } @else {
-        <div class="divide-y divide-slate-50">
-          @for (r of workload(); track r.reviewerName) {
-            <div class="flex items-center gap-4 px-6 py-4">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                {{ r.reviewerName.charAt(0).toUpperCase() }}
+    <!-- ════════════════ USERS ════════════════ -->
+    @if (tab() === 'users') {
+      <div class="space-y-5">
+        <!-- Top authors -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 stagger">
+          @for (sme of topAuthors(); track sme.smeId; let i = $index) {
+            <div class="card card-i p-5 flex items-center gap-4 relative overflow-hidden">
+              <span class="absolute top-3 right-4 text-3xl font-black text-slate-100">#{{ i + 1 }}</span>
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/30">
+                {{ initials(sme.smeName) }}
               </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-slate-800 truncate">{{ r.reviewerName }}</p>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div class="h-2 rounded-full bg-indigo-500 transition-all"
-                       [style.width.%]="Math.min(100, (r.pendingCount / maxWorkload()) * 100)">
-                  </div>
-                </div>
-                <span class="text-sm font-bold text-slate-700 w-6 text-right">{{ r.pendingCount }}</span>
+              <div class="min-w-0 relative">
+                <p class="text-sm font-bold text-slate-800 truncate">{{ sme.smeName }}</p>
+                <p class="text-xs text-slate-400">Authored <span class="font-bold text-indigo-600" [appCountUp]="sme.authoredCount">0</span></p>
               </div>
             </div>
+          } @empty {
+            <div class="card p-8 text-center text-slate-400 sm:col-span-3">No SME activity in this range</div>
           }
+        </div>
+
+        <!-- Reviewer workload -->
+        <div class="card p-6 animate-fade-up">
+          <h3 class="text-sm font-extrabold text-slate-800 mb-1">Reviewer Workload</h3>
+          <p class="text-xs text-slate-400 mb-4">Pending reviews per reviewer</p>
+          @if (workload().length) {
+            <div class="space-y-3.5">
+              @for (w of workload(); track w.reviewerName) {
+                <div class="flex items-center gap-3">
+                  <span class="w-32 sm:w-40 text-sm font-semibold text-slate-600 truncate">{{ w.reviewerName }}</span>
+                  <div class="flex-1 h-3 rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-full rounded-full bar-h bg-gradient-to-r from-indigo-500 to-violet-500"
+                         [style.width.%]="(w.pendingCount / maxWorkload()) * 100"></div>
+                  </div>
+                  <span class="w-8 text-right text-sm font-bold text-slate-700">{{ w.pendingCount }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-sm text-slate-400 py-6 text-center">No pending reviews assigned</p>
+          }
+        </div>
+
+        <!-- SME performance table -->
+        <div class="card overflow-hidden animate-fade-up">
+          <div class="px-6 py-4 border-b border-slate-100">
+            <h3 class="text-sm font-extrabold text-slate-800">SME Performance</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm min-w-[760px]">
+              <caption class="sr-only">Per-SME authored, reviewed and approval metrics</caption>
+              <thead>
+                <tr class="bg-slate-50/70 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <th scope="col" class="text-left px-6 py-3">SME</th>
+                  <th scope="col" class="text-right px-4 py-3">Authored</th>
+                  <th scope="col" class="text-right px-4 py-3">Reviewed</th>
+                  <th scope="col" class="text-right px-4 py-3">Approved</th>
+                  <th scope="col" class="text-right px-4 py-3">Rejected</th>
+                  <th scope="col" class="text-left px-6 py-3 w-48">Approval Rate</th>
+                  <th scope="col" class="text-right px-6 py-3">Avg Turnaround</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (sme of smeReports(); track sme.smeId) {
+                  <tr class="border-t border-slate-100 hover:bg-slate-50/60 transition-colors">
+                    <td class="px-6 py-3.5">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">{{ initials(sme.smeName) }}</div>
+                        <span class="font-semibold text-slate-700">{{ sme.smeName }}</span>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3.5 text-right font-bold text-slate-700">{{ sme.authoredCount }}</td>
+                    <td class="px-4 py-3.5 text-right text-slate-600">{{ sme.reviewedCount }}</td>
+                    <td class="px-4 py-3.5 text-right text-emerald-600 font-semibold">{{ sme.approvedCount }}</td>
+                    <td class="px-4 py-3.5 text-right text-rose-600 font-semibold">{{ sme.rejectedCount }}</td>
+                    <td class="px-6 py-3.5">
+                      <div class="flex items-center gap-2">
+                        <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                          <div class="h-full rounded-full bar-h" [style.width.%]="sme.approvalRate" [style.background]="rateColor(sme.approvalRate)"></div>
+                        </div>
+                        <span class="text-xs font-bold w-9 text-right" [style.color]="rateColor(sme.approvalRate)">{{ Math.round(sme.approvalRate) }}%</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-3.5 text-right text-slate-500">{{ sme.avgTurnaroundHours != null ? (sme.avgTurnaroundHours | number:'1.0-1') + 'h' : '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="7" class="px-6 py-12 text-center text-slate-400">No SME data for this range</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ════════════════ QUESTIONS ════════════════ -->
+    @if (tab() === 'questions') {
+      <div class="space-y-5">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 stagger">
+          <div class="card p-5">
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Total</p>
+            <p class="text-3xl font-extrabold text-indigo-600 mt-1" [appCountUp]="questionAnalytics()?.total ?? 0">0</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Approved</p>
+            <p class="text-3xl font-extrabold text-emerald-600 mt-1" [appCountUp]="questionAnalytics()?.approvedCount ?? 0">0</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Rejected</p>
+            <p class="text-3xl font-extrabold text-rose-600 mt-1" [appCountUp]="questionAnalytics()?.rejectedCount ?? 0">0</p>
+          </div>
+          <div class="card p-5 relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-violet-500/10 blur-xl"></div>
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Approval Rate</p>
+            <p class="text-3xl font-extrabold text-gradient mt-1"><span [appCountUp]="Math.round(questionAnalytics()?.approvalRate ?? 0)" suffix="%">0%</span></p>
+          </div>
+        </div>
+
+        <!-- Avg similarity highlight -->
+        @if (questionAnalytics()?.avgSimilarityPercent != null) {
+          <div class="card p-5 flex items-center gap-4 animate-fade-up">
+            <div class="w-12 h-12 rounded-2xl bg-cyan-50 flex items-center justify-center">
+              <span class="material-icons text-cyan-600" aria-hidden="true">fingerprint</span>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-slate-800">Average duplicate similarity</p>
+              <p class="text-xs text-slate-400">Mean AI similarity score across generated questions</p>
+            </div>
+            <p class="ml-auto text-2xl font-extrabold text-cyan-600"><span [appCountUp]="Math.round(questionAnalytics()?.avgSimilarityPercent ?? 0)" suffix="%">0%</span></p>
+          </div>
+        }
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div class="card p-6 animate-fade-up">
+            <h3 class="text-sm font-extrabold text-slate-800 mb-4">By Status</h3>
+            <ng-container *ngTemplateOutlet="donutTpl; context: { segs: donut(questionAnalytics()?.byStatus, 'status'), center: questionAnalytics()?.total ?? 0 }"></ng-container>
+          </div>
+          <div class="card p-6 animate-fade-up">
+            <h3 class="text-sm font-extrabold text-slate-800 mb-4">By Difficulty</h3>
+            <ng-container *ngTemplateOutlet="donutTpl; context: { segs: donut(questionAnalytics()?.byDifficulty, 'diff'), center: questionAnalytics()?.total ?? 0 }"></ng-container>
+          </div>
+          <div class="card p-6 animate-fade-up">
+            <h3 class="text-sm font-extrabold text-slate-800 mb-4">By Stack</h3>
+            <ng-container *ngTemplateOutlet="barsTpl; context: { rows: bars(questionAnalytics()?.byStack, 'stack') }"></ng-container>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>
+
+<!-- ─── Reusable donut chart ──────────────────────────────── -->
+<ng-template #donutTpl let-segs="segs" let-center="center">
+  @if (segs.length) {
+    <div class="flex flex-col sm:flex-row items-center gap-5">
+      <div class="relative flex-shrink-0">
+        <svg viewBox="0 0 160 160" class="w-36 h-36 animate-scale-in" role="img" aria-label="Distribution chart">
+          <g transform="rotate(-90 80 80)">
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#eef1f6" stroke-width="18" />
+            @for (s of segs; track s.label) {
+              <circle cx="80" cy="80" r="60" fill="none" [attr.stroke]="s.color" stroke-width="18"
+                      [attr.stroke-dasharray]="s.dash" [attr.stroke-dashoffset]="s.offset"
+                      stroke-linecap="round" style="transition: stroke-dasharray .9s cubic-bezier(0.22,1,0.36,1)" />
+            }
+          </g>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span class="text-2xl font-extrabold text-slate-800" [appCountUp]="center">0</span>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
+        </div>
+      </div>
+      <div class="flex-1 w-full space-y-2">
+        @for (s of segs; track s.label) {
+          <div class="flex items-center gap-2 text-xs">
+            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.background]="s.color"></span>
+            <span class="text-slate-600 font-medium capitalize flex-1 truncate">{{ s.label.toLowerCase() }}</span>
+            <span class="text-slate-800 font-bold">{{ s.value }}</span>
+            <span class="text-slate-400 w-9 text-right">{{ s.pct }}%</span>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="flex flex-col items-center justify-center py-10 text-slate-400">
+      <span class="material-icons text-4xl mb-2" aria-hidden="true">donut_large</span>
+      <span class="text-sm">No data</span>
+    </div>
+  }
+</ng-template>
+
+<!-- ─── Reusable horizontal bars ──────────────────────────── -->
+<ng-template #barsTpl let-rows="rows">
+  @if (rows.length) {
+    <div class="space-y-3.5">
+      @for (r of rows; track r.label) {
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="text-slate-600 font-semibold truncate pr-2">{{ r.label }}</span>
+            <span class="text-slate-800 font-bold">{{ r.value }}</span>
+          </div>
+          <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+            <div class="h-full rounded-full bar-h" [style.width.%]="r.pct" [style.background]="r.color"></div>
+          </div>
         </div>
       }
     </div>
-
+  } @else {
+    <div class="flex flex-col items-center justify-center py-10 text-slate-400">
+      <span class="material-icons text-4xl mb-2" aria-hidden="true">bar_chart</span>
+      <span class="text-sm">No data</span>
+    </div>
   }
-</div>
+</ng-template>

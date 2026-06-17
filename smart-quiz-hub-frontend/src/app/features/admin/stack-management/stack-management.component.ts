@@ -4,18 +4,19 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { StackService } from '../../../core/services/stack.service';
 import { StackDetail, TopicDetail } from '../../../core/models';
 import { ButtonDirective } from '../../../shared/components/button/button.directive';
+import { CountUpDirective } from '../../../shared/directives/count-up.directive';
 
 @Component({
   selector: 'app-stack-management',
   standalone: true,
-  imports: [FormsModule, ButtonDirective],
+  imports: [FormsModule, ButtonDirective, CountUpDirective],
   template: `
     <div class="animate-fade-up">
 
       <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 animate-fade-up">
         <div>
-          <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Stack & Topic Management</h1>
+          <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Stack & Topic <span class="text-gradient">Management</span></h1>
           <p class="text-slate-500 text-sm mt-1">Manage technology stacks and their topics</p>
         </div>
         <button (click)="openStackForm()" appBtn="primary">
@@ -26,18 +27,18 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
 
       <!-- Stats strip -->
       @if (!loading() && stacks().length > 0) {
-        <div class="grid grid-cols-3 gap-3 mb-6">
-          <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3.5 shadow-sm">
+        <div class="grid grid-cols-3 gap-3 mb-6 stagger">
+          <div class="card px-4 py-3.5">
             <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Stacks</p>
-            <p class="text-2xl font-extrabold text-slate-900 mt-0.5">{{ stacks().length }}</p>
+            <p class="text-2xl font-extrabold text-slate-900 mt-0.5" [appCountUp]="stacks().length">0</p>
           </div>
-          <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3.5 shadow-sm">
+          <div class="card px-4 py-3.5">
             <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active</p>
-            <p class="text-2xl font-extrabold text-emerald-600 mt-0.5">{{ activeStacks() }}</p>
+            <p class="text-2xl font-extrabold text-emerald-600 mt-0.5" [appCountUp]="activeStacks()">0</p>
           </div>
-          <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3.5 shadow-sm">
+          <div class="card px-4 py-3.5">
             <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Topics</p>
-            <p class="text-2xl font-extrabold text-indigo-600 mt-0.5">{{ totalTopics() }}</p>
+            <p class="text-2xl font-extrabold text-indigo-600 mt-0.5" [appCountUp]="totalTopics()">0</p>
           </div>
         </div>
 
@@ -48,7 +49,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
             <input [ngModel]="search()" (ngModelChange)="search.set($event)"
                    aria-label="Search stacks"
                    placeholder="Search stacks…"
-                   class="w-full h-10 pl-10 pr-4 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all" />
+                   class="field w-full h-10 pl-10 pr-4 text-sm text-slate-700" />
           </div>
           <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1">
             @for (opt of [{ v: 'all', l: 'All' }, { v: 'active', l: 'Active' }, { v: 'inactive', l: 'Inactive' }]; track opt.v) {
@@ -63,14 +64,18 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
       }
 
       @if (loading()) {
-        <div class="flex items-center justify-center py-32">
-          <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-          </svg>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="card p-5 space-y-3">
+              <div class="skeleton h-5 w-2/5"></div>
+              <div class="skeleton h-3 w-3/5"></div>
+              <div class="skeleton h-9 w-full"></div>
+              <div class="skeleton h-9 w-full"></div>
+            </div>
+          }
         </div>
       } @else if (stacks().length === 0) {
-        <div class="bg-white border border-slate-200 rounded-2xl py-20 flex flex-col items-center gap-4 text-center">
+        <div class="card py-20 flex flex-col items-center gap-4 text-center animate-fade-up">
           <div class="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center">
             <span class="material-icons text-indigo-400 text-3xl" aria-hidden="true">layers</span>
           </div>
@@ -84,9 +89,9 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
         </div>
       } @else {
 
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 stagger">
           @for (stack of filteredStacks(); track stack.id) {
-            <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden"
+            <div class="card card-i overflow-hidden"
                  [class.opacity-60]="!stack.active">
 
               <!-- Stack header -->
@@ -108,12 +113,12 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
                 </div>
                 <div class="flex items-center gap-1 flex-shrink-0">
                   <button (click)="openStackForm(stack)"
-                          class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors"
+                          class="press p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors"
                           title="Edit stack" aria-label="Edit stack">
                     <span class="material-icons text-[16px]" aria-hidden="true">edit</span>
                   </button>
                   <button (click)="toggleStack(stack)"
-                          class="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                          class="press p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
                           [class]="stack.active ? 'text-slate-400 hover:text-amber-600' : 'text-slate-400 hover:text-emerald-600'"
                           [title]="stack.active ? 'Deactivate' : 'Activate'"
                           [attr.aria-label]="stack.active ? 'Deactivate stack' : 'Activate stack'">
@@ -135,12 +140,12 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
                     <span class="text-xs text-slate-700 flex-1 min-w-0 truncate">{{ topic.topicName }}</span>
                     <div class="flex items-center gap-0.5 flex-shrink-0">
                       <button (click)="openTopicForm(stack, topic)"
-                              class="p-1 rounded-lg hover:bg-white text-slate-400 hover:text-indigo-600 transition-colors"
+                              class="press p-1 rounded-lg hover:bg-white text-slate-400 hover:text-indigo-600 transition-colors"
                               title="Edit topic" aria-label="Edit topic">
                         <span class="material-icons text-[13px]" aria-hidden="true">edit</span>
                       </button>
                       <button (click)="toggleTopic(stack, topic)"
-                              class="p-1 rounded-lg hover:bg-white transition-colors"
+                              class="press p-1 rounded-lg hover:bg-white transition-colors"
                               [class]="topic.active ? 'text-slate-400 hover:text-amber-500' : 'text-slate-400 hover:text-emerald-500'"
                               [title]="topic.active ? 'Deactivate' : 'Activate'"
                               [attr.aria-label]="topic.active ? 'Deactivate topic' : 'Activate topic'">
@@ -162,7 +167,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
 
             </div>
           } @empty {
-            <div class="col-span-full bg-white border border-slate-200 rounded-2xl py-16 text-center">
+            <div class="col-span-full card py-16 text-center">
               <p class="text-slate-500 font-medium">No stacks match your search / filter</p>
               <button (click)="search.set(''); statusFilter.set('all')" class="mt-2 text-indigo-600 text-sm font-semibold hover:underline">Reset</button>
             </div>
@@ -177,7 +182,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
            (click)="closeModals()">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6"
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-scale-in"
              role="dialog" aria-modal="true" aria-labelledby="stack-modal-title"
              (click)="$event.stopPropagation()">
 
@@ -193,7 +198,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
               </label>
               <input id="stack-name" [(ngModel)]="stackForm.stackName"
                      placeholder="e.g. Angular, Spring Boot, PostgreSQL"
-                     class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all" />
+                     class="field w-full px-4 py-2.5 text-sm text-slate-800" />
             </div>
             <div>
               <label for="stack-description" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
@@ -202,7 +207,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
               <textarea id="stack-description" [(ngModel)]="stackForm.description"
                         placeholder="Brief description (optional)"
                         rows="3"
-                        class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none"></textarea>
+                        class="field w-full px-4 py-2.5 text-sm text-slate-800 resize-none"></textarea>
             </div>
           </div>
 
@@ -232,7 +237,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
            (click)="closeModals()">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-scale-in"
              role="dialog" aria-modal="true" aria-labelledby="topic-modal-title"
              (click)="$event.stopPropagation()">
 
@@ -249,7 +254,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
             </label>
             <input id="topic-name" [(ngModel)]="topicForm.topicName"
                    placeholder="e.g. Components, Dependency Injection"
-                   class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all" />
+                   class="field w-full px-4 py-2.5 text-sm text-slate-800" />
           </div>
 
           <div class="flex justify-end gap-3 mt-6">

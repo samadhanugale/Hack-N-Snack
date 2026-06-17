@@ -8,11 +8,12 @@ import { McqService } from '../../core/services/mcq.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardStats } from '../../core/models';
 import { ButtonDirective } from '../../shared/components/button/button.directive';
+import { CountUpDirective } from '../../shared/directives/count-up.directive';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, MatCardModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, ButtonDirective],
+  imports: [RouterLink, MatCardModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, ButtonDirective, CountUpDirective],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {
@@ -46,9 +47,9 @@ export class DashboardComponent implements OnInit {
   get insightCards() {
     return [
       { label: 'Analytics',       desc: 'Trends, charts & KPIs',       icon: 'insights',      link: '/admin/analytics', color: '#6366F1' },
-      { label: 'SME Reports',     desc: 'Reviewer performance',        icon: 'groups',        link: '/admin/smes',      color: '#8B5CF6' },
-      { label: 'Question Bank',   desc: 'All questions & assignment',  icon: 'library_books', link: '/admin/questions', color: '#06B6D4' },
-      { label: 'Stacks & Topics', desc: 'Manage the taxonomy',         icon: 'layers',        link: '/admin/stacks',    color: '#10B981' },
+      { label: 'SME Reports',     desc: 'Reviewer performance',        icon: 'groups',        link: '/admin/analytics', color: '#8B5CF6' },
+      { label: 'Question Bank',   desc: 'All questions & assignment',  icon: 'library_books', link: '/questions',       color: '#06B6D4' },
+      { label: 'Administration',  desc: 'Users, stacks & topics',      icon: 'admin_panel_settings', link: '/admin',    color: '#10B981' },
     ];
   }
 }
