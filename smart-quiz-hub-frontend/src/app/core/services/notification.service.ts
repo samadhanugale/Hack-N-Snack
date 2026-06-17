@@ -28,4 +28,15 @@ export class NotificationService {
   markAllRead(): Observable<void> {
     return this.http.post<void>(`${this.base}/read-all`, {});
   }
+
+  /**
+   * Opens a Server-Sent Events stream for real-time notifications. The browser
+   * native EventSource cannot send an Authorization header, so the JWT access
+   * token is passed as a query parameter (validated server-side).
+   */
+  openStream(token: string): EventSource {
+    return new EventSource(
+      `${environment.apiUrl}/notifications/stream?token=${encodeURIComponent(token)}`
+    );
+  }
 }

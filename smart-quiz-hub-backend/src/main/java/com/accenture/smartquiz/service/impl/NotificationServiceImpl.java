@@ -8,6 +8,7 @@ import com.accenture.smartquiz.entity.enums.NotificationType;
 import com.accenture.smartquiz.repository.NotificationRepository;
 import com.accenture.smartquiz.repository.UserRepository;
 import com.accenture.smartquiz.service.NotificationService;
+import com.accenture.smartquiz.service.SseEmitterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notifRepo;
     private final UserRepository userRepo;
+    private final SseEmitterRegistry sseEmitterRegistry;
 
     @Override
     @Transactional
@@ -35,6 +37,13 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
         notifRepo.save(n);
         log.debug("Notification [{}] pushed to user {}", type, userId);
+
+        // Best-effort real-time push over SSE. Must never break notification creation.
+        try {
+            sseEmitterRegistry.sendToUser(userId, "notification", NotificationResponse.from(n));
+        } catch (Exception e) {
+            log.warn("Failed to push SSE notification to user {}: {}", userId, e.getMessage());
+        }
     }
 
     @Override

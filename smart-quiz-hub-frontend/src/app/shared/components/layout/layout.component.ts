@@ -34,6 +34,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   bellOpen = signal(false);
 
   private pollSub?: Subscription;
+  private eventSource?: EventSource;
 
   /** Close transient overlays (bell dropdown, mobile drawer) on Escape. */
   @HostListener('document:keydown.escape')
@@ -58,8 +59,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
   );
 
   ngOnInit() {
-    // Poll for unread count every 30 seconds
-    this.pollSub = interval(30_000).pipe(
+    // Real-time push via Server-Sent Events (instant), with the poll below as a fallback.
+    this.openNotificationStream();
+
+    // Fallback poll for unread count (slowed to 60s now that SSE provides instant updates).
+    this.pollSub = interval(60_000).pipe(
       startWith(0),
       switchMap(() => this.notifService.getUnreadCount())
     ).subscribe(count => this.unreadCount.set(count));
@@ -67,6 +71,41 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.pollSub?.unsubscribe();
+    this.eventSource?.close();
+  }
+
+  /** Opens the SSE stream for live notifications. No-op when not logged in. */
+  private openNotificationStream() {
+    const token = this.auth.getToken();
+    if (!token) return;
+
+    this.eventSource = this.notifService.openStream(token);
+
+    this.eventSource.addEventListener('notification', (event: MessageEvent) => {
+      this.unreadCount.update(c => c + 1);
+
+      let incoming: AppNotification | null = null;
+      try {
+        incoming = JSON.parse(event.data) as AppNotification;
+      } catch {
+        incoming = null;
+      }
+
+      if (this.bellOpen()) {
+        // Panel is open: refresh the list from the server for accuracy.
+        this.notifService.getNotifications(0, 10).subscribe(page => {
+          this.notifications.set(page.content);
+        });
+      } else if (incoming) {
+        // Panel closed: keep a fresh copy at the top for when it next opens.
+        this.notifications.update(ns => [incoming as AppNotification, ...ns].slice(0, 10));
+      }
+    });
+
+    // EventSource auto-reconnects on error by default; just log without spamming actions.
+    this.eventSource.onerror = () => {
+      // Connection dropped; the browser will retry automatically. The 60s poll covers the gap.
+    };
   }
 
   toggleBell() {
