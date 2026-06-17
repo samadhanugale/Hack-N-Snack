@@ -19,6 +19,7 @@ import com.accenture.smartquiz.repository.McqQuestionRepository;
 import com.accenture.smartquiz.repository.UserRepository;
 import com.accenture.smartquiz.security.SmartQuizUserDetails;
 import com.accenture.smartquiz.entity.enums.NotificationType;
+import com.accenture.smartquiz.service.AuditService;
 import com.accenture.smartquiz.service.NotificationService;
 import com.accenture.smartquiz.service.ReviewService;
 import com.accenture.smartquiz.util.McqMapper;
@@ -39,6 +40,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final McqQuestionRepository mcqRepo;
     private final UserRepository userRepo;
     private final NotificationService notificationService;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -74,6 +76,9 @@ public class ReviewServiceImpl implements ReviewService {
                 reviewer.getId(), currentUser.getUserId());
 
         McqResponse saved = McqMapper.toResponse(mcqRepo.save(question));
+
+        auditService.record(questionId, "ASSIGNED", currentUser.getUserId(),
+                currentUser.getFullName(), "Reviewer assigned: " + reviewer.getFullName());
 
         notificationService.push(reviewer.getId(),
                 NotificationType.REVIEW_ASSIGNED,
@@ -119,6 +124,9 @@ public class ReviewServiceImpl implements ReviewService {
             }
             question.setReviewerComments(null);
             mcqRepo.save(question);
+            auditService.record(questionId, "ASSIGNED", currentUser.getUserId(),
+                    currentUser.getFullName(),
+                    "Reviewer assigned (bulk): " + reviewer.getFullName());
             assigned++;
         }
 
@@ -191,6 +199,9 @@ public class ReviewServiceImpl implements ReviewService {
             question.setReviewerComments(request.comments());
             question.setReviewedAt(java.time.Instant.now());
             mcqRepo.save(question);
+
+            auditService.record(questionId, decision.name(), currentUser.getUserId(),
+                    currentUser.getFullName(), auditDetail(decision, request.comments()));
 
             // Same creator notification the single decision sends.
             notifyCreatorOfDecision(question, decision, request.comments());
@@ -266,9 +277,21 @@ public class ReviewServiceImpl implements ReviewService {
 
         McqResponse result = McqMapper.toResponse(mcqRepo.save(question));
 
+        auditService.record(questionId, decision.name(), currentUser.getUserId(),
+                currentUser.getFullName(), auditDetail(decision, request.comments()));
+
         notifyCreatorOfDecision(question, decision, request.comments());
 
         return result;
+    }
+
+    /** Builds a concise audit detail for a review decision, summarizing any comment. */
+    private String auditDetail(McqStatus decision, String comments) {
+        String base = "Review decision: " + decision.name();
+        if (comments == null || comments.isBlank()) {
+            return base;
+        }
+        return base + " — \"" + truncate(comments, 120) + "\"";
     }
 
     /** Notification payload derived from a review decision. */

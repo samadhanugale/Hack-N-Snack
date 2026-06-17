@@ -3,6 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { DatePipe } from '@angular/common';
 import { McqResponse } from '../../../core/models';
 import { statusBadgeClass, difficultyBadgeClass, statusLabel } from '../../../shared/utils/badge';
+import { AuditService, AuditLog } from '../../../core/services/audit.service';
 
 export interface QuestionDetailData {
   question: McqResponse;
@@ -104,6 +105,50 @@ export interface QuestionDetailData {
           </div>
         }
       </div>
+
+      <!-- History (lazy-loaded audit trail) -->
+      <div class="mt-6 pt-4 border-t border-slate-100">
+        <button type="button" (click)="toggleHistory()"
+                class="press flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700 uppercase tracking-widest transition-colors"
+                [attr.aria-expanded]="historyOpen">
+          <span class="material-icons text-[18px] transition-transform"
+                [class.rotate-90]="historyOpen" aria-hidden="true">chevron_right</span>
+          History
+        </button>
+
+        @if (historyOpen) {
+          <div class="mt-4 animate-scale-in">
+            @if (historyLoading) {
+              <p class="text-xs text-slate-400 pl-1">Loading history…</p>
+            } @else if (historyError) {
+              <p class="text-xs text-rose-500 pl-1">{{ historyError }}</p>
+            } @else if (history.length === 0) {
+              <p class="text-xs text-slate-400 pl-1">No history recorded yet.</p>
+            } @else {
+              <ol class="relative ml-2 border-l border-slate-200">
+                @for (entry of history; track entry.id) {
+                  <li class="relative pl-6 pb-5 last:pb-0">
+                    <span class="absolute -left-[7px] top-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center ring-4 ring-white"
+                          [class]="actionDotClass(entry.action)">
+                      <span class="material-icons text-white text-[9px]" aria-hidden="true">{{ actionIcon(entry.action) }}</span>
+                    </span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-xs font-bold text-slate-700">{{ actionLabel(entry.action) }}</span>
+                      <span class="text-[11px] text-slate-400">· {{ relativeTime(entry.createdAt) }}</span>
+                    </div>
+                    @if (entry.performedByName) {
+                      <p class="text-[11px] text-slate-500 mt-0.5">by {{ entry.performedByName }}</p>
+                    }
+                    @if (entry.details) {
+                      <p class="text-xs text-slate-600 mt-1 leading-snug">{{ entry.details }}</p>
+                    }
+                  </li>
+                }
+              </ol>
+            }
+          </div>
+        }
+      </div>
     </mat-dialog-content>
 
     <div class="flex justify-end px-7 py-4 border-t border-slate-100 bg-slate-50/60">
@@ -115,6 +160,7 @@ export interface QuestionDetailData {
   `,
 })
 export class QuestionDetailDialogComponent {
+  private readonly auditService = inject(AuditService);
   data = inject<QuestionDetailData>(MAT_DIALOG_DATA);
   q = this.data.question;
 
@@ -122,7 +168,87 @@ export class QuestionDetailDialogComponent {
   readonly statusBadge = statusBadgeClass;
   readonly statusLabel = statusLabel;
 
+  // History (audit trail) — lazy-loaded the first time the section is opened.
+  historyOpen = false;
+  historyLoading = false;
+  historyError: string | null = null;
+  history: AuditLog[] = [];
+  private historyLoaded = false;
+
   optionLabel(i: number): string {
     return String.fromCharCode(65 + i);
+  }
+
+  toggleHistory(): void {
+    this.historyOpen = !this.historyOpen;
+    if (this.historyOpen && !this.historyLoaded) {
+      this.loadHistory();
+    }
+  }
+
+  private loadHistory(): void {
+    this.historyLoading = true;
+    this.historyError = null;
+    this.auditService.getForQuestion(this.q.id).subscribe({
+      next: page => {
+        this.history = page.content;
+        this.historyLoaded = true;
+        this.historyLoading = false;
+      },
+      error: () => {
+        this.historyError = 'Could not load history.';
+        this.historyLoading = false;
+      },
+    });
+  }
+
+  actionLabel(action: string): string {
+    return action
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  actionIcon(action: string): string {
+    switch (action) {
+      case 'CREATED': return 'add';
+      case 'UPDATED': return 'edit';
+      case 'SUBMITTED': return 'send';
+      case 'ASSIGNED': return 'person_add';
+      case 'APPROVED': return 'check';
+      case 'REJECTED': return 'close';
+      case 'MODIFICATION_REQUESTED': return 'autorenew';
+      case 'DELETED': return 'delete';
+      default: return 'history';
+    }
+  }
+
+  actionDotClass(action: string): string {
+    switch (action) {
+      case 'APPROVED': return 'bg-emerald-500';
+      case 'REJECTED': return 'bg-rose-500';
+      case 'MODIFICATION_REQUESTED': return 'bg-amber-500';
+      case 'SUBMITTED': return 'bg-indigo-500';
+      case 'ASSIGNED': return 'bg-cyan-500';
+      case 'DELETED': return 'bg-slate-500';
+      case 'CREATED': return 'bg-violet-500';
+      default: return 'bg-slate-400';
+    }
+  }
+
+  relativeTime(iso: string): string {
+    const then = new Date(iso).getTime();
+    if (isNaN(then)) return '';
+    const secs = Math.max(0, Math.floor((Date.now() - then) / 1000));
+    if (secs < 60) return 'just now';
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    return `${Math.floor(months / 12)}y ago`;
   }
 }

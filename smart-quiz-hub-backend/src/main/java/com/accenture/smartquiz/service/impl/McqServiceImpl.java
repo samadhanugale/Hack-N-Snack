@@ -24,6 +24,7 @@ import com.accenture.smartquiz.repository.TechnologyStackRepository;
 import com.accenture.smartquiz.repository.TopicRepository;
 import com.accenture.smartquiz.repository.UserRepository;
 import com.accenture.smartquiz.security.SmartQuizUserDetails;
+import com.accenture.smartquiz.service.AuditService;
 import com.accenture.smartquiz.service.McqService;
 import com.accenture.smartquiz.service.SimilarityOutcome;
 import com.accenture.smartquiz.service.SimilarityService;
@@ -60,6 +61,7 @@ public class McqServiceImpl implements McqService {
     private final TopicRepository topicRepo;
     private final UserRepository userRepo;
     private final SimilarityService similarityService;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -81,7 +83,10 @@ public class McqServiceImpl implements McqService {
                 .status(McqStatus.DRAFT)
                 .build();
 
-        return McqMapper.toResponse(mcqRepo.save(question));
+        McqQuestion saved = mcqRepo.save(question);
+        auditService.record(saved.getId(), "CREATED", currentUser.getUserId(),
+                currentUser.getFullName(), "Question created (DRAFT)");
+        return McqMapper.toResponse(saved);
     }
 
     @Override
@@ -102,7 +107,10 @@ public class McqServiceImpl implements McqService {
         question.setStack(stack);
         question.setTopic(topic);
 
-        return McqMapper.toResponse(mcqRepo.save(question));
+        McqQuestion saved = mcqRepo.save(question);
+        auditService.record(saved.getId(), "UPDATED", currentUser.getUserId(),
+                currentUser.getFullName(), "Question content updated");
+        return McqMapper.toResponse(saved);
     }
 
     @Override
@@ -159,7 +167,10 @@ public class McqServiceImpl implements McqService {
 
         question.setStatus(McqStatus.READY_FOR_REVIEW);
         question.setSubmittedAt(java.time.Instant.now());
-        return McqMapper.toResponse(mcqRepo.save(question));
+        McqQuestion saved = mcqRepo.save(question);
+        auditService.record(saved.getId(), "SUBMITTED", currentUser.getUserId(),
+                currentUser.getFullName(), "status DRAFT → READY_FOR_REVIEW");
+        return McqMapper.toResponse(saved);
     }
 
     /**
@@ -222,6 +233,10 @@ public class McqServiceImpl implements McqService {
                 "You can only delete your own questions in DRAFT or READY FOR REVIEW status");
         }
 
+        // Record with a null question_id: the audit_logs FK cascades on question delete, so a
+        // DELETED entry keyed to this question would be removed with it. Keep the id in details.
+        auditService.record(null, "DELETED", currentUser.getUserId(), currentUser.getFullName(),
+                "Question #" + id + " deleted (was " + question.getStatus() + ")");
         mcqRepo.delete(question);
     }
 
