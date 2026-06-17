@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, computed, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../.././../core/services/auth.service';
@@ -25,12 +25,20 @@ export class LayoutComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   notifService = inject(NotificationService);
   collapsed = signal(false);
+  mobileOpen = signal(false);
 
   unreadCount = signal(0);
   notifications = signal<AppNotification[]>([]);
   bellOpen = signal(false);
 
   private pollSub?: Subscription;
+
+  /** Close transient overlays (bell dropdown, mobile drawer) on Escape. */
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    this.bellOpen.set(false);
+    this.mobileOpen.set(false);
+  }
 
   navItems: NavItem[] = [
     { icon: 'dashboard',     label: 'Dashboard',       route: '/dashboard' },

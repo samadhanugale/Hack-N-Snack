@@ -1,7 +1,7 @@
 <div class="animate-fade-up">
 
   <!-- Header -->
-  <div class="flex items-center justify-between mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
       <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Super Admin · Users</h1>
       <p class="text-slate-500 text-sm mt-1">Create and manage SMEs and admins — no DB migrations needed</p>
@@ -9,11 +9,11 @@
     <div class="flex items-center gap-3">
       @if (activeFilterCount() > 0 || search()) {
         <button (click)="clearFilters()" appBtn="secondary">
-          <span class="material-icons text-[16px]">filter_alt_off</span> Clear
+          <span class="material-icons text-[16px]" aria-hidden="true">filter_alt_off</span> Clear
         </button>
       }
       <button (click)="openCreate()" appBtn="primary">
-        <span class="material-icons text-[17px]">person_add</span> Add User
+        <span class="material-icons text-[17px]" aria-hidden="true">person_add</span> Add User
       </button>
     </div>
   </div>
@@ -43,8 +43,9 @@
 
   <!-- Search -->
   <div class="relative mb-4 max-w-md">
-    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]" aria-hidden="true">search</span>
     <input [ngModel]="search()" (ngModelChange)="search.set($event); page.set(0)"
+           aria-label="Search users"
            placeholder="Search by name, email or enterprise ID…"
            class="w-full h-10 pl-10 pr-4 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all" />
   </div>
@@ -58,17 +59,19 @@
     </div>
   } @else {
     <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-      <table class="w-full text-sm">
+      <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[820px]">
+        <caption class="sr-only">SMEs and admins with their roles, status and contributions</caption>
         <thead>
           <tr class="bg-slate-50 border-b border-slate-200">
-            <th class="text-left px-5 py-3"><app-th-cell label="Name" sortKey="name" [sort]="sort()" (sortChange)="setSort($event)" /></th>
-            <th class="text-left px-5 py-3"><app-th-cell label="Enterprise ID" sortKey="enterprise" [sort]="sort()" (sortChange)="setSort($event)" /></th>
-            <th class="text-left px-5 py-3"><app-th-cell label="Email" sortKey="email" [sort]="sort()" (sortChange)="setSort($event)" /></th>
-            <th class="text-left px-5 py-3"><app-th-cell label="Role" sortKey="role" [sort]="sort()" (sortChange)="setSort($event)" [filterOptions]="roleOptions" [filterValue]="filters()['role']" (filterChange)="setFilter('role', $event)" /></th>
-            <th class="text-left px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Stacks</th>
-            <th class="text-left px-5 py-3"><app-th-cell label="Status" sortKey="status" [sort]="sort()" (sortChange)="setSort($event)" [filterOptions]="statusOptions" [filterValue]="filters()['status']" (filterChange)="setFilter('status', $event)" /></th>
-            <th class="text-left px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Contributions</th>
-            <th class="text-left px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
+            <th scope="col" class="text-left px-5 py-3"><app-th-cell label="Name" sortKey="name" [sort]="sort()" (sortChange)="setSort($event)" /></th>
+            <th scope="col" class="text-left px-5 py-3"><app-th-cell label="Enterprise ID" sortKey="enterprise" [sort]="sort()" (sortChange)="setSort($event)" /></th>
+            <th scope="col" class="text-left px-5 py-3"><app-th-cell label="Email" sortKey="email" [sort]="sort()" (sortChange)="setSort($event)" /></th>
+            <th scope="col" class="text-left px-5 py-3"><app-th-cell label="Role" sortKey="role" [sort]="sort()" (sortChange)="setSort($event)" [filterOptions]="roleOptions" [filterValue]="filters()['role']" (filterChange)="setFilter('role', $event)" /></th>
+            <th scope="col" class="text-left px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Stacks</th>
+            <th scope="col" class="text-left px-5 py-3"><app-th-cell label="Status" sortKey="status" [sort]="sort()" (sortChange)="setSort($event)" [filterOptions]="statusOptions" [filterValue]="filters()['status']" (filterChange)="setFilter('status', $event)" /></th>
+            <th scope="col" class="text-left px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Contributions</th>
+            <th scope="col" class="text-left px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -109,23 +112,24 @@
               </td>
               <td class="px-5 py-4">
                 <div class="flex items-center gap-1">
-                  <button (click)="openEdit(u)" matTooltip="Edit"
+                  <button (click)="openEdit(u)" matTooltip="Edit" aria-label="Edit user"
                           class="w-8 h-8 rounded-lg flex items-center justify-center text-indigo-500 enabled:hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                    <span class="material-icons text-[16px]">edit</span>
+                    <span class="material-icons text-[16px]" aria-hidden="true">edit</span>
                   </button>
                   <button (click)="toggleActive(u)" [disabled]="isSelf(u)"
                           [matTooltip]="u.active ? 'Deactivate' : 'Activate'"
+                          [attr.aria-label]="u.active ? 'Deactivate user' : 'Activate user'"
                           class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           [class]="u.active ? 'text-amber-500 enabled:hover:bg-amber-50' : 'text-emerald-500 enabled:hover:bg-emerald-50'">
-                    <span class="material-icons text-[16px]">{{ u.active ? 'toggle_on' : 'toggle_off' }}</span>
+                    <span class="material-icons text-[16px]" aria-hidden="true">{{ u.active ? 'toggle_on' : 'toggle_off' }}</span>
                   </button>
-                  <button (click)="resetPassword(u)" matTooltip="Reset password"
+                  <button (click)="resetPassword(u)" matTooltip="Reset password" aria-label="Reset password"
                           class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 enabled:hover:bg-slate-100 enabled:hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                    <span class="material-icons text-[16px]">lock_reset</span>
+                    <span class="material-icons text-[16px]" aria-hidden="true">lock_reset</span>
                   </button>
-                  <button (click)="delete(u)" [disabled]="isSelf(u)" matTooltip="Delete"
+                  <button (click)="delete(u)" [disabled]="isSelf(u)" matTooltip="Delete" aria-label="Delete user"
                           class="w-8 h-8 rounded-lg flex items-center justify-center text-rose-500 enabled:hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                    <span class="material-icons text-[16px]">delete</span>
+                    <span class="material-icons text-[16px]" aria-hidden="true">delete</span>
                   </button>
                 </div>
               </td>
@@ -140,6 +144,7 @@
           }
         </tbody>
       </table>
+      </div>
 
       <!-- Pagination -->
       <div class="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 bg-slate-50/50">

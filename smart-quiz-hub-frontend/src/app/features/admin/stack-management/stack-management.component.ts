@@ -13,13 +13,13 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
     <div class="animate-fade-up">
 
       <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Stack & Topic Management</h1>
           <p class="text-slate-500 text-sm mt-1">Manage technology stacks and their topics</p>
         </div>
         <button (click)="openStackForm()" appBtn="primary">
-          <span class="material-icons text-[17px]">add</span>
+          <span class="material-icons text-[17px]" aria-hidden="true">add</span>
           New Stack
         </button>
       </div>
@@ -44,8 +44,9 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
         <!-- Search + status filter -->
         <div class="flex items-center gap-3 mb-6 flex-wrap">
           <div class="relative flex-1 min-w-[220px]">
-            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]" aria-hidden="true">search</span>
             <input [ngModel]="search()" (ngModelChange)="search.set($event)"
+                   aria-label="Search stacks"
                    placeholder="Search stacks…"
                    class="w-full h-10 pl-10 pr-4 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all" />
           </div>
@@ -71,14 +72,14 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
       } @else if (stacks().length === 0) {
         <div class="bg-white border border-slate-200 rounded-2xl py-20 flex flex-col items-center gap-4 text-center">
           <div class="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center">
-            <span class="material-icons text-indigo-400 text-3xl">layers</span>
+            <span class="material-icons text-indigo-400 text-3xl" aria-hidden="true">layers</span>
           </div>
           <div>
             <p class="text-slate-800 font-semibold">No stacks yet</p>
             <p class="text-slate-400 text-sm mt-1">Create your first technology stack to get started</p>
           </div>
           <button (click)="openStackForm()" appBtn="primary" class="mt-1">
-            <span class="material-icons text-[17px]">add</span> New Stack
+            <span class="material-icons text-[17px]" aria-hidden="true">add</span> New Stack
           </button>
         </div>
       } @else {
@@ -108,14 +109,15 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
                 <div class="flex items-center gap-1 flex-shrink-0">
                   <button (click)="openStackForm(stack)"
                           class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors"
-                          title="Edit stack">
-                    <span class="material-icons text-[16px]">edit</span>
+                          title="Edit stack" aria-label="Edit stack">
+                    <span class="material-icons text-[16px]" aria-hidden="true">edit</span>
                   </button>
                   <button (click)="toggleStack(stack)"
                           class="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
                           [class]="stack.active ? 'text-slate-400 hover:text-amber-600' : 'text-slate-400 hover:text-emerald-600'"
-                          [title]="stack.active ? 'Deactivate' : 'Activate'">
-                    <span class="material-icons text-[16px]">{{ stack.active ? 'toggle_on' : 'toggle_off' }}</span>
+                          [title]="stack.active ? 'Deactivate' : 'Activate'"
+                          [attr.aria-label]="stack.active ? 'Deactivate stack' : 'Activate stack'">
+                    <span class="material-icons text-[16px]" aria-hidden="true">{{ stack.active ? 'toggle_on' : 'toggle_off' }}</span>
                   </button>
                 </div>
               </div>
@@ -134,14 +136,15 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
                     <div class="flex items-center gap-0.5 flex-shrink-0">
                       <button (click)="openTopicForm(stack, topic)"
                               class="p-1 rounded-lg hover:bg-white text-slate-400 hover:text-indigo-600 transition-colors"
-                              title="Edit topic">
-                        <span class="material-icons text-[13px]">edit</span>
+                              title="Edit topic" aria-label="Edit topic">
+                        <span class="material-icons text-[13px]" aria-hidden="true">edit</span>
                       </button>
                       <button (click)="toggleTopic(stack, topic)"
                               class="p-1 rounded-lg hover:bg-white transition-colors"
                               [class]="topic.active ? 'text-slate-400 hover:text-amber-500' : 'text-slate-400 hover:text-emerald-500'"
-                              [title]="topic.active ? 'Deactivate' : 'Activate'">
-                        <span class="material-icons text-[13px]">{{ topic.active ? 'toggle_on' : 'toggle_off' }}</span>
+                              [title]="topic.active ? 'Deactivate' : 'Activate'"
+                              [attr.aria-label]="topic.active ? 'Deactivate topic' : 'Activate topic'">
+                        <span class="material-icons text-[13px]" aria-hidden="true">{{ topic.active ? 'toggle_on' : 'toggle_off' }}</span>
                       </button>
                     </div>
                   </div>
@@ -152,7 +155,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
               <div class="px-5 pb-4 pt-2 border-t border-slate-100">
                 <button (click)="openTopicForm(stack)"
                         class="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
-                  <span class="material-icons text-[14px]">add_circle_outline</span>
+                  <span class="material-icons text-[14px]" aria-hidden="true">add_circle_outline</span>
                   Add Topic
                 </button>
               </div>
@@ -175,27 +178,28 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
            (click)="closeModals()">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6"
+             role="dialog" aria-modal="true" aria-labelledby="stack-modal-title"
              (click)="$event.stopPropagation()">
 
-          <h2 class="text-lg font-bold text-slate-900 mb-1">
+          <h2 id="stack-modal-title" class="text-lg font-bold text-slate-900 mb-1">
             {{ editingStack() ? 'Edit Stack' : 'New Stack' }}
           </h2>
           <p class="text-sm text-slate-400 mb-5">Fill in the details below</p>
 
           <div class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              <label for="stack-name" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
                 Stack Name <span class="text-rose-500">*</span>
               </label>
-              <input [(ngModel)]="stackForm.stackName"
+              <input id="stack-name" [(ngModel)]="stackForm.stackName"
                      placeholder="e.g. Angular, Spring Boot, PostgreSQL"
                      class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              <label for="stack-description" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
                 Description
               </label>
-              <textarea [(ngModel)]="stackForm.description"
+              <textarea id="stack-description" [(ngModel)]="stackForm.description"
                         placeholder="Brief description (optional)"
                         rows="3"
                         class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none"></textarea>
@@ -229,9 +233,10 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
            (click)="closeModals()">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+             role="dialog" aria-modal="true" aria-labelledby="topic-modal-title"
              (click)="$event.stopPropagation()">
 
-          <h2 class="text-lg font-bold text-slate-900 mb-1">
+          <h2 id="topic-modal-title" class="text-lg font-bold text-slate-900 mb-1">
             {{ editingTopic() ? 'Edit Topic' : 'New Topic' }}
           </h2>
           <p class="text-sm text-slate-400 mb-5">
@@ -239,10 +244,10 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
           </p>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+            <label for="topic-name" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
               Topic Name <span class="text-rose-500">*</span>
             </label>
-            <input [(ngModel)]="topicForm.topicName"
+            <input id="topic-name" [(ngModel)]="topicForm.topicName"
                    placeholder="e.g. Components, Dependency Injection"
                    class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all" />
           </div>

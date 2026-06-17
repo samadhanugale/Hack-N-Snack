@@ -1,7 +1,7 @@
 <div class="animate-fade-up">
 
   <!-- Header -->
-  <div class="flex items-center justify-between mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
       <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">My Questions</h1>
       <p class="text-slate-500 text-sm mt-1">Manage, track and analyse your submitted questions</p>
@@ -93,28 +93,30 @@
   } @else {
     <!-- Table -->
     <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-      <table class="w-full text-sm">
+     <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[760px]">
+        <caption class="sr-only">Your submitted questions with stack, difficulty, status and actions</caption>
         <thead>
           <tr class="bg-slate-50 border-b border-slate-200">
-            <th class="text-left px-5 py-3">
+            <th scope="col" class="text-left px-5 py-3">
               <app-th-cell label="Question" sortKey="stem" [sort]="sort()" (sortChange)="setSort($event)" />
             </th>
-            <th class="text-left px-5 py-3">
+            <th scope="col" class="text-left px-5 py-3">
               <app-th-cell label="Stack / Topic" sortKey="stack" [sort]="sort()" (sortChange)="setSort($event)"
                            [filterOptions]="stackOptions()" [filterValue]="filters()['stack']" (filterChange)="setFilter('stack', $event)" />
             </th>
-            <th class="text-left px-5 py-3">
+            <th scope="col" class="text-left px-5 py-3">
               <app-th-cell label="Difficulty" sortKey="difficulty" [sort]="sort()" (sortChange)="setSort($event)"
                            [filterOptions]="difficultyOptions" [filterValue]="filters()['difficulty']" (filterChange)="setFilter('difficulty', $event)" />
             </th>
-            <th class="text-left px-5 py-3">
+            <th scope="col" class="text-left px-5 py-3">
               <app-th-cell label="Status" sortKey="status" [sort]="sort()" (sortChange)="setSort($event)"
                            [filterOptions]="statusOptions" [filterValue]="filters()['status']" (filterChange)="setFilter('status', $event)" />
             </th>
-            <th class="text-left px-5 py-3">
+            <th scope="col" class="text-left px-5 py-3">
               <app-th-cell label="Updated" sortKey="updated" [sort]="sort()" (sortChange)="setSort($event)" />
             </th>
-            <th class="text-left px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
+            <th scope="col" class="text-left px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -142,24 +144,24 @@
               </td>
               <td class="px-5 py-4">
                 <div class="flex items-center gap-1">
-                  <button (click)="openView(q)" matTooltip="View"
+                  <button (click)="openView(q)" matTooltip="View" aria-label="View question"
                           class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 enabled:hover:bg-slate-100 enabled:hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                    <span class="material-icons text-[16px]">visibility</span>
+                    <span class="material-icons text-[16px]" aria-hidden="true">visibility</span>
                   </button>
-                  <button (click)="openEdit(q)" matTooltip="Edit"
+                  <button (click)="openEdit(q)" matTooltip="Edit" aria-label="Edit question"
                           [disabled]="!(q.status === 'DRAFT' || q.status === 'READY_FOR_REVIEW' || q.status === 'MODIFICATION_REQUESTED')"
                           class="w-8 h-8 rounded-lg flex items-center justify-center text-indigo-500 enabled:hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                    <span class="material-icons text-[16px]">edit</span>
+                    <span class="material-icons text-[16px]" aria-hidden="true">edit</span>
                   </button>
-                  <button (click)="submitForReview(q)" matTooltip="Submit for Review"
+                  <button (click)="submitForReview(q)" matTooltip="Submit for Review" aria-label="Submit for review"
                           [disabled]="!(q.status === 'DRAFT' || q.status === 'MODIFICATION_REQUESTED')"
                           class="w-8 h-8 rounded-lg flex items-center justify-center text-amber-500 enabled:hover:bg-amber-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                    <span class="material-icons text-[16px]">send</span>
+                    <span class="material-icons text-[16px]" aria-hidden="true">send</span>
                   </button>
-                  <button (click)="delete(q)" matTooltip="Delete"
+                  <button (click)="delete(q)" matTooltip="Delete" aria-label="Delete question"
                           [disabled]="!(q.status === 'DRAFT' || q.status === 'READY_FOR_REVIEW')"
                           class="w-8 h-8 rounded-lg flex items-center justify-center text-rose-500 enabled:hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                    <span class="material-icons text-[16px]">delete</span>
+                    <span class="material-icons text-[16px]" aria-hidden="true">delete</span>
                   </button>
                 </div>
               </td>
@@ -174,6 +176,7 @@
           }
         </tbody>
       </table>
+     </div>
 
       <!-- Pagination -->
       <div class="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 bg-slate-50/50">

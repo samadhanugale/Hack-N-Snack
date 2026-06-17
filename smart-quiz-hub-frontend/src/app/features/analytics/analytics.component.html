@@ -1,22 +1,22 @@
 <div class="animate-fade-up">
 
   <!-- Header -->
-  <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
     <div>
       <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Analytics</h1>
       <p class="text-slate-500 text-sm mt-1">System-wide question metrics and reviewer workload</p>
     </div>
 
     <!-- Date-range filter (Story 2.3) -->
-    <div class="flex items-end gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+    <div class="flex flex-wrap items-end gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
       <div class="flex flex-col">
-        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">From</label>
-        <input type="date" [value]="startDate() ?? ''" (change)="startDate.set($any($event.target).value || null)"
+        <label for="analytics-from" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">From</label>
+        <input id="analytics-from" type="date" [value]="startDate() ?? ''" (change)="startDate.set($any($event.target).value || null)"
                class="h-9 px-2 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-indigo-500" />
       </div>
       <div class="flex flex-col">
-        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">To</label>
-        <input type="date" [value]="endDate() ?? ''" (change)="endDate.set($any($event.target).value || null)"
+        <label for="analytics-to" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">To</label>
+        <input id="analytics-to" type="date" [value]="endDate() ?? ''" (change)="endDate.set($any($event.target).value || null)"
                class="h-9 px-2 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-indigo-500" />
       </div>
       <button (click)="applyRange()" appBtn="primary">Apply</button>
@@ -27,8 +27,8 @@
   </div>
 
   @if (loading()) {
-    <div class="flex items-center justify-center py-40">
-      <svg class="animate-spin h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24">
+    <div class="flex items-center justify-center py-40" role="status" aria-label="Loading analytics">
+      <svg class="animate-spin h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
       </svg>
@@ -54,7 +54,7 @@
     <!-- Question performance (selected range) — Story 2.2 -->
     @if (questionAnalytics(); as qa) {
       <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-8">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h2 class="font-semibold text-slate-800">Question Performance</h2>
           <span class="text-xs text-slate-400">{{ hasRange ? 'Selected range' : 'All time' }}</span>
         </div>
@@ -124,7 +124,7 @@
       </div>
       @if (workload().length === 0) {
         <div class="flex flex-col items-center py-12 text-slate-400 gap-2">
-          <span class="material-icons text-3xl">inbox</span>
+          <span class="material-icons text-3xl" aria-hidden="true">inbox</span>
           <span class="text-sm">No active review assignments</span>
         </div>
       } @else {

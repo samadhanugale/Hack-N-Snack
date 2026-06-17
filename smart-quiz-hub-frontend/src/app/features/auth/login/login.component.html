@@ -69,39 +69,45 @@
 
         <!-- Enterprise ID -->
         <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1.5">Enterprise ID</label>
+          <label for="enterpriseId" class="block text-sm font-semibold text-slate-700 mb-1.5">Enterprise ID</label>
           <div class="relative">
-            <span class="material-icons absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">badge</span>
-            <input formControlName="enterpriseId"
+            <span class="material-icons absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]" aria-hidden="true">badge</span>
+            <input id="enterpriseId" formControlName="enterpriseId"
                    autocomplete="username"
                    placeholder="firstname.lastname"
+                   [attr.aria-invalid]="form.get('enterpriseId')?.invalid && form.get('enterpriseId')?.touched"
+                   aria-describedby="enterpriseId-error"
                    class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all bg-slate-50 focus:bg-white" />
           </div>
           @if (form.get('enterpriseId')?.hasError('required') && form.get('enterpriseId')?.touched) {
-            <p class="text-xs text-rose-500 mt-1.5 flex items-center gap-1">
-              <span class="material-icons text-[13px]">error</span> Enterprise ID is required
+            <p id="enterpriseId-error" role="alert" class="text-xs text-rose-500 mt-1.5 flex items-center gap-1">
+              <span class="material-icons text-[13px]" aria-hidden="true">error</span> Enterprise ID is required
             </p>
           }
         </div>
 
         <!-- Password -->
         <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
+          <label for="password" class="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
           <div class="relative">
-            <span class="material-icons absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">lock</span>
-            <input formControlName="password"
+            <span class="material-icons absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]" aria-hidden="true">lock</span>
+            <input id="password" formControlName="password"
                    [type]="showPass() ? 'text' : 'password'"
                    autocomplete="current-password"
                    placeholder="••••••••"
+                   [attr.aria-invalid]="form.get('password')?.invalid && form.get('password')?.touched"
+                   aria-describedby="password-error"
                    class="w-full pl-10 pr-12 py-3 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all bg-slate-50 focus:bg-white" />
             <button type="button" (click)="showPass.set(!showPass())"
+                    [attr.aria-label]="showPass() ? 'Hide password' : 'Show password'"
+                    [attr.aria-pressed]="showPass()"
                     class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-              <span class="material-icons text-[18px]">{{ showPass() ? 'visibility_off' : 'visibility' }}</span>
+              <span class="material-icons text-[18px]" aria-hidden="true">{{ showPass() ? 'visibility_off' : 'visibility' }}</span>
             </button>
           </div>
           @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
-            <p class="text-xs text-rose-500 mt-1.5 flex items-center gap-1">
-              <span class="material-icons text-[13px]">error</span> Password is required
+            <p id="password-error" role="alert" class="text-xs text-rose-500 mt-1.5 flex items-center gap-1">
+              <span class="material-icons text-[13px]" aria-hidden="true">error</span> Password is required
             </p>
           }
         </div>

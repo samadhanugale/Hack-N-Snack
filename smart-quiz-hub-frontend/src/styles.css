@@ -23,6 +23,27 @@ html, body {
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+/* ── Accessibility: consistent keyboard focus ring ───────────────────────────── */
+/* Preflight is disabled, so define a single visible focus style for keyboard users
+   across every interactive element (incl. div/anchor "buttons" used app-wide). */
+:where(a, button, [role="button"], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid #4F46E5;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+/* Don't show the ring for mouse/touch clicks, only keyboard. */
+:where(a, button, [role="button"]):focus:not(:focus-visible) { outline: none; }
+
+/* ── Respect users who prefer reduced motion ─────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ── Angular Material overlay tweaks (target Material's generated DOM) ────────── */
 .cdk-overlay-dark-backdrop {
   background: rgba(0, 0, 0, 0.55) !important;

@@ -29,7 +29,7 @@ import { StackSummary, TopicResponse } from '../../../core/models';
     <div mat-dialog-title class="px-6 pt-6 pb-0">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center">
-          <span class="material-icons text-white text-[18px]">auto_awesome</span>
+          <span class="material-icons text-white text-[18px]" aria-hidden="true">auto_awesome</span>
         </div>
         <div>
           <h2 class="text-xl font-bold text-slate-900">AI Question Generator</h2>
@@ -38,14 +38,15 @@ import { StackSummary, TopicResponse } from '../../../core/models';
       </div>
     </div>
 
-    <mat-dialog-content class="px-6 pt-4 pb-2" style="min-width:520px">
+    <mat-dialog-content class="px-6 pt-4 pb-2 max-w-full sm:min-w-[520px]">
       <form [formGroup]="form" class="flex flex-col gap-4">
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Stack</label>
-            <select formControlName="stackId"
+            <label for="ai-stack" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Stack</label>
+            <select id="ai-stack" formControlName="stackId"
               (change)="onStack(+$any($event.target).value)"
+              [attr.aria-invalid]="form.get('stackId')?.invalid && form.get('stackId')?.touched"
               class="w-full h-11 border border-slate-200 rounded-xl px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all bg-slate-50 focus:bg-white appearance-none">
               <option [value]="null">Select stack…</option>
               @for (s of stacks(); track s.id) {
@@ -54,8 +55,9 @@ import { StackSummary, TopicResponse } from '../../../core/models';
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Topic</label>
-            <select formControlName="topicId"
+            <label for="ai-topic" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Topic</label>
+            <select id="ai-topic" formControlName="topicId"
+              [attr.aria-invalid]="form.get('topicId')?.invalid && form.get('topicId')?.touched"
               class="w-full h-11 border border-slate-200 rounded-xl px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all bg-slate-50 focus:bg-white appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
               [disabled]="topics().length === 0">
               <option [value]="null">{{ topics().length === 0 ? 'Select stack first' : 'Select topic…' }}</option>
@@ -66,10 +68,10 @@ import { StackSummary, TopicResponse } from '../../../core/models';
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Difficulty</label>
-            <select formControlName="difficulty"
+            <label for="ai-difficulty" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Difficulty</label>
+            <select id="ai-difficulty" formControlName="difficulty"
               class="w-full h-11 border border-slate-200 rounded-xl px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all bg-slate-50 focus:bg-white appearance-none">
               <option value="EASY">Easy</option>
               <option value="MEDIUM">Medium</option>
@@ -77,15 +79,17 @@ import { StackSummary, TopicResponse } from '../../../core/models';
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Count (1–10)</label>
-            <input type="number" formControlName="count" min="1" max="10"
+            <label for="ai-count" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Count (1–10)</label>
+            <input id="ai-count" type="number" formControlName="count" min="1" max="10"
+              [attr.aria-invalid]="form.get('count')?.invalid && form.get('count')?.touched"
               class="w-full h-11 border border-slate-200 rounded-xl px-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all bg-slate-50 focus:bg-white" />
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Topic Context / Hints</label>
-          <textarea rows="3" formControlName="topicContext"
+          <label for="ai-context" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Topic Context / Hints</label>
+          <textarea id="ai-context" rows="3" formControlName="topicContext"
+            [attr.aria-invalid]="form.get('topicContext')?.invalid && form.get('topicContext')?.touched"
             placeholder="e.g. Focus on practical use-cases, circuit breaker patterns..."
             class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none bg-slate-50 focus:bg-white"></textarea>
         </div>
@@ -107,7 +111,7 @@ import { StackSummary, TopicResponse } from '../../../core/models';
           </svg>
           Generating…
         } @else {
-          <span class="material-icons text-[17px]">auto_awesome</span>
+          <span class="material-icons text-[17px]" aria-hidden="true">auto_awesome</span>
           Generate
         }
       </button>
