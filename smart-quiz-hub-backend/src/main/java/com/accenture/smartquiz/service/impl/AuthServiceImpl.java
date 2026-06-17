@@ -1,9 +1,11 @@
 package com.accenture.smartquiz.service.impl;
 
 import com.accenture.smartquiz.config.LoginRateLimiter;
+import com.accenture.smartquiz.dto.request.ChangePasswordRequest;
 import com.accenture.smartquiz.dto.request.LoginRequest;
 import com.accenture.smartquiz.dto.response.AuthResponse;
 import com.accenture.smartquiz.entity.User;
+import com.accenture.smartquiz.exception.ResourceNotFoundException;
 import com.accenture.smartquiz.repository.UserRepository;
 import com.accenture.smartquiz.security.JwtTokenProvider;
 import com.accenture.smartquiz.security.SmartQuizUserDetails;
@@ -15,6 +17,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final LoginRateLimiter rateLimiter;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.expiration-ms}")
     private long expirationMs;
@@ -66,5 +70,21 @@ public class AuthServiceImpl implements AuthService {
             log.warn("Failed login attempt (invalid credentials)");
             throw ex;
         }
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordRequest request, SmartQuizUserDetails currentUser) {
+        User user = userRepository.findById(currentUser.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.getUserId()));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            log.warn("Failed password change for user ID {} (current password mismatch)", user.getId());
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        log.info("Password changed for user ID: {}", user.getId());
     }
 }

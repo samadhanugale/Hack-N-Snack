@@ -199,12 +199,13 @@
       </div>
 
       <!-- User avatar chip -->
-      <div class="flex items-center gap-2.5 pl-1">
+      <a routerLink="/profile" title="My Profile" aria-label="My Profile"
+         class="flex items-center gap-2.5 pl-1 cursor-pointer hover:opacity-80 transition no-underline">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-indigo-500/30">
           {{ user()?.fullName?.charAt(0)?.toUpperCase() }}
         </div>
         <span class="text-sm font-bold text-slate-700 hidden md:block">{{ user()?.fullName }}</span>
-      </div>
+      </a>
       </div>
     </header>
 

@@ -36,6 +36,20 @@ export class AnalyticsService {
       .pipe(map(r => r.data));
   }
 
+  exportSmeReports(range?: AnalyticsDateRange): Observable<Blob> {
+    return this.http.get(`${this.base}/sme-reports/export`, {
+      params: this.rangeParams(range),
+      responseType: 'blob'
+    });
+  }
+
+  exportQuestionAnalytics(range?: AnalyticsDateRange): Observable<Blob> {
+    return this.http.get(`${this.base}/questions/export`, {
+      params: this.rangeParams(range),
+      responseType: 'blob'
+    });
+  }
+
   private rangeParams(range?: AnalyticsDateRange): HttpParams {
     let p = new HttpParams();
     if (range?.startDate) p = p.set('startDate', range.startDate);

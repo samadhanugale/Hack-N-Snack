@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -165,7 +166,78 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportSmeReportsCsv(Instant start, Instant end) {
+        List<SmeReportResponse> reports = getSmeReports(start, end);
+
+        StringBuilder csv = new StringBuilder();
+        csv.append(csvRow("SME Name", "Authored", "Reviewed", "Approved", "Rejected",
+                "Modification Requested", "Approval Rate %", "Avg Turnaround (h)", "Pending"));
+        for (SmeReportResponse r : reports) {
+            csv.append(csvRow(
+                    r.smeName(),
+                    Long.toString(r.authoredCount()),
+                    Long.toString(r.reviewedCount()),
+                    Long.toString(r.approvedCount()),
+                    Long.toString(r.rejectedCount()),
+                    Long.toString(r.modificationRequestedCount()),
+                    Double.toString(r.approvalRate()),
+                    r.avgTurnaroundHours() != null ? Double.toString(r.avgTurnaroundHours()) : "",
+                    Long.toString(r.pendingCount())));
+        }
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportQuestionAnalyticsCsv(Instant start, Instant end) {
+        QuestionAnalyticsResponse a = getQuestionAnalytics(start, end);
+
+        StringBuilder csv = new StringBuilder();
+        csv.append(csvRow("Metric", "Value"));
+        csv.append(csvRow("total", Long.toString(a.total())));
+        csv.append(csvRow("approved", Long.toString(a.approvedCount())));
+        csv.append(csvRow("rejected", Long.toString(a.rejectedCount())));
+        csv.append(csvRow("approvalRate", Double.toString(a.approvalRate())));
+        csv.append(csvRow("avgSimilarity",
+                a.avgSimilarityPercent() != null ? Double.toString(a.avgSimilarityPercent()) : ""));
+
+        csv.append("\r\n");
+        csv.append(csvRow("Status", "Count"));
+        a.byStatus().forEach((k, v) -> csv.append(csvRow(k, Long.toString(v))));
+
+        csv.append("\r\n");
+        csv.append(csvRow("Stack", "Count"));
+        a.byStack().forEach((k, v) -> csv.append(csvRow(k, Long.toString(v))));
+
+        csv.append("\r\n");
+        csv.append(csvRow("Difficulty", "Count"));
+        a.byDifficulty().forEach((k, v) -> csv.append(csvRow(k, Long.toString(v))));
+
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────────
+
+    /** Builds a single CSV record (CRLF-terminated) from already-escaped-or-raw cells. */
+    private String csvRow(String... cells) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < cells.length; i++) {
+            if (i > 0) sb.append(',');
+            sb.append(csvEscape(cells[i]));
+        }
+        return sb.append("\r\n").toString();
+    }
+
+    /** Quotes a value when it contains a comma, quote, or newline; doubles internal quotes. */
+    private String csvEscape(String value) {
+        if (value == null) return "";
+        boolean mustQuote = value.contains(",") || value.contains("\"")
+                || value.contains("\n") || value.contains("\r");
+        if (!mustQuote) return value;
+        return "\"" + value.replace("\"", "\"\"") + "\"";
+    }
 
     private Map<String, Long> toCountMap(List<Object[]> rows) {
         Map<String, Long> map = new LinkedHashMap<>();

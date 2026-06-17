@@ -125,6 +125,12 @@
     <!-- ════════════════ USERS ════════════════ -->
     @if (tab() === 'users') {
       <div class="space-y-5">
+        <!-- Toolbar -->
+        <div class="flex justify-end">
+          <button appBtn="secondary" size="sm" (click)="exportSme()">
+            <span class="material-icons text-[16px]">download</span> Export CSV
+          </button>
+        </div>
         <!-- Top authors -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 stagger">
           @for (sme of topAuthors(); track sme.smeId; let i = $index) {
@@ -220,6 +226,12 @@
     <!-- ════════════════ QUESTIONS ════════════════ -->
     @if (tab() === 'questions') {
       <div class="space-y-5">
+        <!-- Toolbar -->
+        <div class="flex justify-end">
+          <button appBtn="secondary" size="sm" (click)="exportQuestions()">
+            <span class="material-icons text-[16px]">download</span> Export CSV
+          </button>
+        </div>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 stagger">
           <div class="card p-5">
             <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Total</p>

@@ -2,8 +2,10 @@ package com.accenture.smartquiz.service;
 
 import com.accenture.smartquiz.dto.request.AssignReviewerRequest;
 import com.accenture.smartquiz.dto.request.BulkAssignRequest;
+import com.accenture.smartquiz.dto.request.BulkDecisionRequest;
 import com.accenture.smartquiz.dto.request.ReviewRequest;
 import com.accenture.smartquiz.dto.response.BulkAssignResponse;
+import com.accenture.smartquiz.dto.response.BulkDecisionResponse;
 import com.accenture.smartquiz.dto.response.McqResponse;
 import com.accenture.smartquiz.dto.response.PagedResponse;
 import com.accenture.smartquiz.entity.enums.McqStatus;
@@ -19,6 +21,9 @@ public interface ReviewService {
     McqResponse startReview(Long questionId, SmartQuizUserDetails currentUser);
 
     McqResponse submitReview(Long questionId, ReviewRequest request, SmartQuizUserDetails currentUser);
+
+    /** Admin-only: apply the same review decision to many questions, skipping per-item failures. */
+    BulkDecisionResponse bulkDecision(BulkDecisionRequest request, SmartQuizUserDetails currentUser);
 
     PagedResponse<McqResponse> getPendingReviews(SmartQuizUserDetails currentUser, Pageable pageable);
 

@@ -2,8 +2,10 @@ package com.accenture.smartquiz.service.impl;
 
 import com.accenture.smartquiz.dto.request.AssignReviewerRequest;
 import com.accenture.smartquiz.dto.request.BulkAssignRequest;
+import com.accenture.smartquiz.dto.request.BulkDecisionRequest;
 import com.accenture.smartquiz.dto.request.ReviewRequest;
 import com.accenture.smartquiz.dto.response.BulkAssignResponse;
+import com.accenture.smartquiz.dto.response.BulkDecisionResponse;
 import com.accenture.smartquiz.dto.response.McqResponse;
 import com.accenture.smartquiz.dto.response.PagedResponse;
 import com.accenture.smartquiz.entity.McqQuestion;
@@ -131,6 +133,82 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
+    public BulkDecisionResponse bulkDecision(BulkDecisionRequest request, SmartQuizUserDetails currentUser) {
+        if (currentUser.getRole() != UserRole.ADMIN) {
+            throw new UnauthorizedAccessException("Only admins can bulk-decide reviews");
+        }
+
+        McqStatus decision = request.decision();
+        // Same decision-value validation the single-decision path enforces.
+        if (decision != McqStatus.APPROVED && decision != McqStatus.REJECTED
+                && decision != McqStatus.MODIFICATION_REQUESTED) {
+            throw new InvalidStatusTransitionException(
+                    "Review decision must be APPROVED, REJECTED, or MODIFICATION_REQUESTED");
+        }
+        // Same comments-mandatory rule the single-decision path enforces — fail the whole
+        // request up-front (a missing comment is a caller error, not a per-item condition).
+        if ((decision == McqStatus.REJECTED || decision == McqStatus.MODIFICATION_REQUESTED)
+                && (request.comments() == null || request.comments().isBlank())) {
+            throw new IllegalArgumentException(
+                    "Comments are mandatory when rejecting or requesting modifications");
+        }
+
+        int processed = 0;
+        List<String> skippedReasons = new ArrayList<>();
+
+        for (Long questionId : request.questionIds()) {
+            McqQuestion question = mcqRepo.findById(questionId).orElse(null);
+            if (question == null) {
+                skippedReasons.add("Question " + questionId + ": not found");
+                continue;
+            }
+            // Only questions currently UNDER_REVIEW can be decided (the single path also accepts
+            // READY_FOR_REVIEW and promotes it; we mirror that to stay consistent).
+            if (question.getStatus() != McqStatus.UNDER_REVIEW
+                    && question.getStatus() != McqStatus.READY_FOR_REVIEW) {
+                skippedReasons.add("Question " + questionId + ": status is " + question.getStatus());
+                continue;
+            }
+            if (question.getStatus() == McqStatus.READY_FOR_REVIEW) {
+                question.setStatus(McqStatus.UNDER_REVIEW);
+            }
+            // Reuse the same state-machine guard the single path uses.
+            if (!question.getStatus().canTransitionTo(decision)) {
+                skippedReasons.add("Question " + questionId + ": cannot transition "
+                        + question.getStatus() + " -> " + decision);
+                continue;
+            }
+
+            // Admin bulk authorization: the single-decision path requires the caller to be the
+            // assigned reviewer. An admin may not be the assigned reviewer, so we do NOT apply that
+            // check here. If no reviewer is set, attribute the decision to the acting admin so
+            // reviewer_id is never left null; otherwise keep the existing assigned reviewer.
+            if (question.getReviewer() == null) {
+                userRepo.findById(currentUser.getUserId()).ifPresent(question::setReviewer);
+            }
+
+            question.setStatus(decision);
+            question.setReviewerComments(request.comments());
+            question.setReviewedAt(java.time.Instant.now());
+            mcqRepo.save(question);
+
+            // Same creator notification the single decision sends.
+            notifyCreatorOfDecision(question, decision, request.comments());
+            processed++;
+        }
+
+        log.info("Bulk decision {}: {} processed, {} skipped by admin {}",
+                decision, processed, skippedReasons.size(), currentUser.getUserId());
+
+        return BulkDecisionResponse.builder()
+                .processed(processed)
+                .skipped(skippedReasons.size())
+                .skippedReasons(skippedReasons)
+                .build();
+    }
+
+    @Override
+    @Transactional
     public McqResponse startReview(Long questionId, SmartQuizUserDetails currentUser) {
         McqQuestion question = findById(questionId);
 
@@ -188,6 +266,17 @@ public class ReviewServiceImpl implements ReviewService {
 
         McqResponse result = McqMapper.toResponse(mcqRepo.save(question));
 
+        notifyCreatorOfDecision(question, decision, request.comments());
+
+        return result;
+    }
+
+    /** Notification payload derived from a review decision. */
+    private record ReviewOutcome(NotificationType type, String title, String message) {}
+
+    /** Pushes the creator the notification matching a review decision (shared by single + bulk paths). */
+    private void notifyCreatorOfDecision(McqQuestion question, McqStatus decision, String comments) {
+        Long questionId = question.getId();
         // Java 21 switch expression — routes each decision to its notification (Story 3.1).
         ReviewOutcome outcome = switch (decision) {
             case APPROVED -> new ReviewOutcome(
@@ -196,22 +285,17 @@ public class ReviewServiceImpl implements ReviewService {
             case REJECTED -> new ReviewOutcome(
                     NotificationType.QUESTION_REJECTED, "Question Rejected",
                     "Your question #" + questionId + " was rejected. Reviewer comments: "
-                            + nullToEmpty(request.comments()));
+                            + nullToEmpty(comments));
             case MODIFICATION_REQUESTED -> new ReviewOutcome(
                     NotificationType.MODIFICATION_REQUESTED, "Modifications Requested",
                     "Your question #" + questionId + " needs changes before approval. "
-                            + "Reviewer comments: " + nullToEmpty(request.comments()));
+                            + "Reviewer comments: " + nullToEmpty(comments));
             default -> throw new InvalidStatusTransitionException(
                     "Unsupported review decision: " + decision);
         };
         notificationService.push(question.getCreator().getId(),
                 outcome.type(), outcome.title(), outcome.message(), questionId);
-
-        return result;
     }
-
-    /** Notification payload derived from a review decision. */
-    private record ReviewOutcome(NotificationType type, String title, String message) {}
 
     private static String nullToEmpty(String s) {
         return s == null ? "" : s;

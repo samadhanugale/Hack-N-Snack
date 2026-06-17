@@ -20,4 +20,10 @@ public interface AnalyticsService {
     QuestionAnalyticsResponse getQuestionAnalytics(Instant start, Instant end);
 
     List<ReviewerWorkloadResponse> getReviewerWorkload();
+
+    /** SME performance report rendered as a UTF-8 CSV document (Story 2.1 export). */
+    byte[] exportSmeReportsCsv(Instant start, Instant end);
+
+    /** Question analytics summary rendered as a UTF-8 CSV document (Story 2.2 export). */
+    byte[] exportQuestionAnalyticsCsv(Instant start, Instant end);
 }

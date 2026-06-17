@@ -40,14 +40,22 @@
 
   <!-- Bulk action bar -->
   @if (selectionCount() > 0) {
-    <div class="flex items-center gap-4 mb-4 px-5 py-3 bg-indigo-50 border border-indigo-200 rounded-2xl animate-fade-up">
+    <div class="flex flex-wrap items-center gap-3 mb-4 px-5 py-3 bg-indigo-50 border border-indigo-200 rounded-2xl animate-fade-up">
       <span class="material-icons text-indigo-500 text-[20px]" aria-hidden="true">checklist</span>
-      <p class="text-sm font-semibold text-indigo-700 flex-1">
+      <p class="text-sm font-semibold text-indigo-700 flex-1 min-w-[8rem]">
         {{ selectionCount() }} question{{ selectionCount() !== 1 ? 's' : '' }} selected
       </p>
-      <button (click)="openBulkAssign()" appBtn="primary">
+      <button (click)="openBulkAssign()" appBtn="primary" size="sm">
         <span class="material-icons text-[16px]" aria-hidden="true">group_add</span>
-        Assign Reviewer
+        Assign
+      </button>
+      <button (click)="bulkApprove()" appBtn="success" size="sm">
+        <span class="material-icons text-[16px]" aria-hidden="true">check_circle</span>
+        Approve
+      </button>
+      <button (click)="bulkDelete()" appBtn="danger" size="sm">
+        <span class="material-icons text-[16px]" aria-hidden="true">delete</span>
+        Delete
       </button>
       <button (click)="clearSelection()"
               class="text-xs text-indigo-400 hover:text-indigo-600 font-semibold transition-colors">

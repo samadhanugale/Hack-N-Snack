@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AnalyticsService } from '../../core/services/analytics.service';
+import { SnackService } from '../../core/services/snack.service';
 import { AnalyticsOverview, QuestionAnalytics, ReviewerWorkload, SmeReport } from '../../core/models';
 import { ButtonDirective } from '../../shared/components/button/button.directive';
 import { CountUpDirective } from '../../shared/directives/count-up.directive';
@@ -19,6 +20,7 @@ interface BarRow { label: string; value: number; pct: number; color: string; }
 })
 export class AnalyticsComponent implements OnInit {
   private analyticsSvc = inject(AnalyticsService);
+  private snack = inject(SnackService);
 
   tab = signal<Tab>('global');
 
@@ -63,6 +65,42 @@ export class AnalyticsComponent implements OnInit {
   applyRange(): void { this.load(); }
   resetRange(): void { this.startDate.set(null); this.endDate.set(null); this.load(); }
   get hasRange(): boolean { return !!(this.startDate() || this.endDate()); }
+
+  // ── CSV export ───────────────────────────────────────────────
+  exportSme(): void {
+    this.analyticsSvc
+      .exportSmeReports({ startDate: this.startDate(), endDate: this.endDate() })
+      .subscribe({
+        next: blob => {
+          this.downloadBlob(blob, 'sme-reports.csv');
+          this.snack.success('SME reports exported');
+        },
+        error: () => this.snack.error('Failed to export SME reports'),
+      });
+  }
+
+  exportQuestions(): void {
+    this.analyticsSvc
+      .exportQuestionAnalytics({ startDate: this.startDate(), endDate: this.endDate() })
+      .subscribe({
+        next: blob => {
+          this.downloadBlob(blob, 'question-analytics.csv');
+          this.snack.success('Question analytics exported');
+        },
+        error: () => this.snack.error('Failed to export question analytics'),
+      });
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   // ── Global KPIs ──────────────────────────────────────────────
   totalQuestions = computed(() => {

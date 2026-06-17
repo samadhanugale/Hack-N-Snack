@@ -173,6 +173,51 @@ export class QuestionBankComponent implements OnInit {
 
   clearSelection(): void { this.selectedIds.set(new Set()); }
 
+  /** Bulk-approve all selected questions that are under review. */
+  bulkApprove(): void {
+    const ids = [...this.selectedIds()];
+    this.confirm.ask({
+      title: `Approve ${ids.length} question${ids.length !== 1 ? 's' : ''}?`,
+      message: 'Selected questions that are under review will be approved. Others are skipped.',
+      confirmText: 'Approve', variant: 'primary', icon: 'check_circle',
+    }).then(ok => {
+      if (!ok) return;
+      this.reviewSvc.bulkDecision(ids, 'APPROVED').subscribe({
+        next: r => {
+          const d = r.data;
+          this.snack.success(d.skipped > 0 ? `Approved ${d.processed}, skipped ${d.skipped}` : `${d.processed} approved`);
+          this.clearSelection();
+          this.load();
+        },
+        error: err => this.snack.error(err.error?.message ?? 'Bulk approve failed'),
+      });
+    });
+  }
+
+  /** Bulk-delete all selected questions (server enforces which are deletable). */
+  bulkDelete(): void {
+    const ids = [...this.selectedIds()];
+    this.confirm.ask({
+      title: `Delete ${ids.length} question${ids.length !== 1 ? 's' : ''}?`,
+      message: 'This permanently removes the selected questions. This cannot be undone.',
+      confirmText: 'Delete', variant: 'danger', icon: 'delete',
+    }).then(ok => {
+      if (!ok) return;
+      let remaining = ids.length, deleted = 0;
+      const tick = () => {
+        if (--remaining === 0) {
+          this.snack.success(`Deleted ${deleted} of ${ids.length}`);
+          this.clearSelection();
+          this.load();
+        }
+      };
+      ids.forEach(id => this.mcqSvc.deleteQuestion(id).subscribe({
+        next: () => { deleted++; tick(); },
+        error: () => tick(),
+      }));
+    });
+  }
+
   /** Single-question assign or reassign */
   openAssignReviewer(q: McqResponse): void {
     this.adminSvc.getSmesByStack(q.stackId).subscribe(res => {

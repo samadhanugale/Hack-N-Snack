@@ -2,9 +2,11 @@ package com.accenture.smartquiz.controller;
 
 import com.accenture.smartquiz.dto.request.AssignReviewerRequest;
 import com.accenture.smartquiz.dto.request.BulkAssignRequest;
+import com.accenture.smartquiz.dto.request.BulkDecisionRequest;
 import com.accenture.smartquiz.dto.request.ReviewRequest;
 import com.accenture.smartquiz.dto.response.ApiResponse;
 import com.accenture.smartquiz.dto.response.BulkAssignResponse;
+import com.accenture.smartquiz.dto.response.BulkDecisionResponse;
 import com.accenture.smartquiz.dto.response.McqResponse;
 import com.accenture.smartquiz.dto.response.PagedResponse;
 import com.accenture.smartquiz.security.SmartQuizUserDetails;
@@ -36,6 +38,16 @@ public class ReviewController {
             @AuthenticationPrincipal SmartQuizUserDetails currentUser) {
         return ResponseEntity.ok(ApiResponse.success("Bulk assign completed",
                 reviewService.bulkAssignReviewer(request, currentUser)));
+    }
+
+    @PostMapping("/questions/bulk-decision")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Bulk-apply a review decision to multiple UNDER_REVIEW questions (Admin only)")
+    public ResponseEntity<ApiResponse<BulkDecisionResponse>> bulkDecision(
+            @Valid @RequestBody BulkDecisionRequest request,
+            @AuthenticationPrincipal SmartQuizUserDetails currentUser) {
+        return ResponseEntity.ok(ApiResponse.success("Bulk decision completed",
+                reviewService.bulkDecision(request, currentUser)));
     }
 
     @PostMapping("/questions/{questionId}/assign")
