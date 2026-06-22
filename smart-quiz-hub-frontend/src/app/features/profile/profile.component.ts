@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import {
   FormBuilder,
   Validators,
@@ -8,6 +8,9 @@ import {
 } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { SnackService } from '../../core/services/snack.service';
+import { StackService } from '../../core/services/stack.service';
+import { ProfileService } from '../../core/services/profile.service';
+import { StackSummary } from '../../core/models';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { ButtonDirective } from '../../shared/components/button/button.directive';
 
@@ -180,15 +183,91 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
           </div>
         </form>
       </section>
+
+      <!-- ─── My Stacks (self-service) ───────────────────────── -->
+      <section class="card p-7 lg:col-span-5" aria-label="My stacks">
+        <div class="flex items-start justify-between gap-3 mb-5 flex-wrap">
+          <div>
+            <h2 class="text-lg font-extrabold text-slate-800 tracking-tight">My Stacks</h2>
+            <p class="text-slate-500 text-sm mt-0.5">Technology stacks you're skilled in — these decide which questions you can be assigned to review.</p>
+          </div>
+          <button type="button" appBtn="primary" [disabled]="savingStacks() || !stacksDirty()" (click)="saveStacks()">
+            <span class="material-icons text-[17px]" aria-hidden="true">{{ savingStacks() ? 'hourglass_empty' : 'save' }}</span>
+            {{ savingStacks() ? 'Saving…' : 'Save stacks' }}
+          </button>
+        </div>
+
+        @if (loadingStacks()) {
+          <div class="flex flex-wrap gap-2">
+            @for (i of [1,2,3,4,5,6]; track i) { <div class="skeleton h-9 w-28 rounded-full"></div> }
+          </div>
+        } @else if (allStacks().length === 0) {
+          <p class="text-sm text-slate-400">No stacks available yet.</p>
+        } @else {
+          <div class="flex flex-wrap gap-2">
+            @for (s of allStacks(); track s.id) {
+              <button type="button" (click)="toggleStack(s.id)"
+                      [attr.aria-pressed]="selectedStacks.has(s.id)"
+                      class="press inline-flex items-center gap-1.5 px-3.5 h-9 rounded-full text-sm font-semibold border transition-all"
+                      [class]="selectedStacks.has(s.id)
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/30'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'">
+                <span class="material-icons text-[15px]" aria-hidden="true">{{ selectedStacks.has(s.id) ? 'check' : 'add' }}</span>
+                {{ s.stackName }}
+              </button>
+            }
+          </div>
+          <p class="text-xs text-slate-400 mt-3">{{ selectedStacks.size }} stack{{ selectedStacks.size === 1 ? '' : 's' }} selected</p>
+        }
+      </section>
     </div>
   `,
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private snack = inject(SnackService);
+  private stackSvc = inject(StackService);
+  private profileSvc = inject(ProfileService);
 
   user = this.auth.currentUser;
+
+  // ── My Stacks (self-service) ──────────────────────────────────────────────
+  allStacks = signal<StackSummary[]>([]);
+  selectedStacks = new Set<number>();
+  loadingStacks = signal(true);
+  savingStacks = signal(false);
+  stacksDirty = signal(false);
+
+  ngOnInit(): void {
+    this.stackSvc.getStacks().subscribe(r => this.allStacks.set(r.data));
+    this.profileSvc.getMe().subscribe({
+      next: r => { this.selectedStacks = new Set(r.data.stacks.map(s => s.id)); this.loadingStacks.set(false); },
+      error: () => this.loadingStacks.set(false),
+    });
+  }
+
+  toggleStack(id: number): void {
+    this.selectedStacks.has(id) ? this.selectedStacks.delete(id) : this.selectedStacks.add(id);
+    this.stacksDirty.set(true);
+  }
+
+  saveStacks(): void {
+    if (this.savingStacks()) return;
+    this.savingStacks.set(true);
+    this.profileSvc.updateMyStacks([...this.selectedStacks]).subscribe({
+      next: r => {
+        this.selectedStacks = new Set(r.data.stacks.map(s => s.id));
+        this.stacksDirty.set(false);
+        this.savingStacks.set(false);
+        this.snack.success('Your stacks were updated.');
+      },
+      error: err => {
+        this.savingStacks.set(false);
+        this.snack.error(err.error?.message ?? 'Could not update your stacks.');
+      },
+    });
+  }
 
   roleLabel = computed(() => {
     const role = this.auth.currentUser()?.role;

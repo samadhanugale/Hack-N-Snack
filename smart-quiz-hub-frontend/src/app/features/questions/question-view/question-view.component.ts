@@ -96,6 +96,23 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
               <span class="px-2.5 py-1 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300 text-xs font-semibold border border-cyan-100 dark:border-cyan-500/20">{{ q.topicName }}</span>
             </div>
 
+            <!-- Review-pipeline status banner -->
+            @if (q.status === 'READY_FOR_REVIEW' || q.status === 'UNDER_REVIEW') {
+              <div class="flex items-start gap-3 rounded-xl px-4 py-3 border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-600/40">
+                <span class="material-icons text-[18px] mt-0.5 flex-shrink-0 text-blue-500" aria-hidden="true">{{ q.status === 'UNDER_REVIEW' ? 'hourglass_top' : 'send' }}</span>
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-widest mb-1 text-blue-600 dark:text-blue-300">{{ q.status === 'UNDER_REVIEW' ? 'Under review' : 'Submitted' }}</p>
+                  <p class="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                    @if (q.status === 'UNDER_REVIEW') {
+                      Submitted and currently under review@if (q.reviewerName) { by <strong>{{ q.reviewerName }}</strong>}. You'll be notified of the decision.
+                    } @else {
+                      Submitted for review — awaiting a reviewer. You'll be notified once it's reviewed.
+                    }
+                  </p>
+                </div>
+              </div>
+            }
+
             <!-- Question stem -->
             <div>
               <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Question</p>
