@@ -44,6 +44,7 @@ public final class McqMapper {
                 .aiSimilarityScore(q.getAiSimilarityScore())
                 .createdAt(q.getCreatedAt())
                 .updatedAt(q.getUpdatedAt())
+                .assignedAt(q.getAssignedAt())
                 .build();
     }
 }

@@ -83,6 +83,19 @@ app:
       threshold: ${AI_SIMILARITY_THRESHOLD:0.30}
       embeddings-enabled: ${AI_EMBEDDINGS_ENABLED:true}
       embedding-floor: ${AI_EMBEDDING_FLOOR:0.50}
+  # ─────────────────────────────────────────────────────────────
+  #  Review SLA engine (ReviewSlaScheduler)
+  #  enabled          : master switch — set false to disable the scheduled scan entirely.
+  #  reminder-hours   : after this many hours UNDER_REVIEW, the assigned reviewer is reminded (once).
+  #  escalation-hours : after this many hours UNDER_REVIEW, all admins are escalated to (once).
+  #  interval-ms      : delay between scans (fixedDelay). 1800000 = 30 min.
+  #  All values overridable via environment variables.
+  review:
+    sla:
+      enabled: ${REVIEW_SLA_ENABLED:true}
+      reminder-hours: ${REVIEW_SLA_REMINDER_HOURS:24}
+      escalation-hours: ${REVIEW_SLA_ESCALATION_HOURS:48}
+      interval-ms: ${REVIEW_SLA_INTERVAL_MS:1800000}
 
 # JWT_SECRET is required — no default. Generate one with: openssl rand -base64 48
 jwt:

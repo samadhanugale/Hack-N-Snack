@@ -72,6 +72,7 @@ export interface McqResponse {
   aiSimilarityScore: number | null;
   createdAt: string;
   updatedAt: string;
+  assignedAt?: string | null;
 }
 
 export interface McqRequest {

@@ -31,4 +31,5 @@ public class McqResponse {
     private BigDecimal aiSimilarityScore;
     private Instant createdAt;
     private Instant updatedAt;
+    private Instant assignedAt;   // when the current reviewer was assigned (review SLA clock)
 }

@@ -83,6 +83,18 @@ export class PendingReviewsComponent implements OnInit {
   });
   select(q: McqResponse): void { this.selected.set(q); }
 
+  /** Hours since the reviewer was assigned (review SLA clock), or null if unknown. */
+  hoursSinceAssigned(q: McqResponse): number | null {
+    if (!q.assignedAt) return null;
+    return (Date.now() - new Date(q.assignedAt).getTime()) / 3_600_000;
+  }
+  /** Overdue once a pending review has sat past the 24h reminder SLA. */
+  isOverdue(q: McqResponse): boolean {
+    if (this.tab() !== 'pending') return false;
+    const h = this.hoursSinceAssigned(q);
+    return h != null && h >= 24;
+  }
+
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
     if (qp.get('tab') === 'reviewed') this.tab.set('reviewed');

@@ -162,6 +162,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       case 'REVIEW_ASSIGNED':   return 'assignment';
       case 'QUESTION_APPROVED': return 'check_circle';
       case 'QUESTION_REJECTED': return 'cancel';
+      case 'MODIFICATION_REQUESTED': return 'autorenew';
+      case 'NEW_COMMENT':       return 'forum';
+      case 'REVIEW_REMINDER':   return 'alarm';
+      case 'REVIEW_ESCALATED':  return 'priority_high';
       default:                  return 'notifications';
     }
   }
@@ -171,6 +175,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       case 'REVIEW_ASSIGNED':   return 'text-blue-400';
       case 'QUESTION_APPROVED': return 'text-green-400';
       case 'QUESTION_REJECTED': return 'text-red-400';
+      case 'MODIFICATION_REQUESTED': return 'text-violet-400';
+      case 'NEW_COMMENT':       return 'text-indigo-400';
+      case 'REVIEW_REMINDER':   return 'text-amber-500';
+      case 'REVIEW_ESCALATED':  return 'text-rose-500';
       default:                  return 'text-slate-400';
     }
   }

@@ -7,6 +7,23 @@ import {
 } from '../models';
 import { environment } from '../../../environments/environment';
 
+/** A single quality issue flagged by the AI Review Assistant. */
+export interface AiReviewIssue {
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  message: string;
+}
+
+/** AI Review Assistant analysis of an MCQ. */
+export interface AiReview {
+  qualityScore: number;          // 0–100
+  suggestedDifficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  summary: string;
+  issues: AiReviewIssue[];
+  answerExplanation: string;
+  suggestions: string[];
+  aiPowered: boolean;            // false → heuristic fallback (AI unavailable)
+}
+
 /**
  * Level 2 AI features — available to both SMEs and Admins.
  * Backed by the /ai endpoints on the server.
@@ -25,5 +42,10 @@ export class AiService {
   /** Check a candidate MCQ for duplicates within the same stack & topic. */
   duplicateCheck(req: DuplicateCheckRequest): Observable<ApiResponse<DuplicateCheckResponse>> {
     return this.http.post<ApiResponse<DuplicateCheckResponse>>(`${this.base}/duplicate-check`, req);
+  }
+
+  /** AI Review Assistant — request an LLM quality analysis of an existing question. */
+  reviewQuestion(questionId: number): Observable<ApiResponse<AiReview>> {
+    return this.http.post<ApiResponse<AiReview>>(`${this.base}/review/${questionId}`, {});
   }
 }

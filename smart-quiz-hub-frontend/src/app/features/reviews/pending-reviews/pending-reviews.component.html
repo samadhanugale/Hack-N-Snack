@@ -102,6 +102,11 @@
                     [class]="current()?.id === q.id ? 'ring-2 ring-indigo-500/60 shadow-card-hover' : 'card-i'">
               <div class="flex items-center gap-2 mb-1.5">
                 <span [class]="diffBadge(q.difficulty)">{{ q.difficulty }}</span>
+                @if (isOverdue(q)) {
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 animate-pop">
+                    <span class="material-icons text-[12px]" aria-hidden="true">alarm</span>Overdue
+                  </span>
+                }
                 @if (tab() === 'reviewed') {
                   <span [class]="statusBadge(q.status)" class="!px-2 !py-0.5 scale-90 origin-left">{{ q.status.replaceAll('_', ' ') }}</span>
                 }

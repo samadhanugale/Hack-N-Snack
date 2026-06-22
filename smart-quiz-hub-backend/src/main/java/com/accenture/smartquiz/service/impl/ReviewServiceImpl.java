@@ -71,6 +71,7 @@ public class ReviewServiceImpl implements ReviewService {
             question.setStatus(McqStatus.UNDER_REVIEW);
         }
         question.setReviewerComments(null);
+        startSlaClock(question);
 
         log.info("Question {} assigned to reviewer {} by admin {}", questionId,
                 reviewer.getId(), currentUser.getUserId());
@@ -123,6 +124,7 @@ public class ReviewServiceImpl implements ReviewService {
                 question.setStatus(McqStatus.UNDER_REVIEW);
             }
             question.setReviewerComments(null);
+            startSlaClock(question);
             mcqRepo.save(question);
             auditService.record(questionId, "ASSIGNED", currentUser.getUserId(),
                     currentUser.getFullName(),
@@ -376,6 +378,7 @@ public class ReviewServiceImpl implements ReviewService {
 
             question.setReviewer(reviewer);
             question.setStatus(McqStatus.UNDER_REVIEW);
+            startSlaClock(question);
             mcqRepo.save(question);
 
             notificationService.push(reviewer.getId(),
@@ -389,6 +392,16 @@ public class ReviewServiceImpl implements ReviewService {
 
         log.info("Auto-assign: {} question(s) assigned", assigned);
         return assigned;
+    }
+
+    /**
+     * Restarts the review SLA clock for a fresh (re)assignment: stamps assignedAt = now and
+     * clears the reminder/escalation markers so {@code ReviewSlaScheduler} treats it as new.
+     */
+    private void startSlaClock(McqQuestion question) {
+        question.setAssignedAt(java.time.Instant.now());
+        question.setReminderSentAt(null);
+        question.setEscalatedAt(null);
     }
 
     private McqQuestion findById(Long id) {

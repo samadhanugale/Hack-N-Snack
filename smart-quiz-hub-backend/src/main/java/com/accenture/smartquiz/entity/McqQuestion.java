@@ -80,6 +80,18 @@ public class McqQuestion {
     @Column(name = "reviewed_at")
     private Instant reviewedAt;
 
+    /** Set when the current reviewer assignment starts — baseline for the review SLA clock. */
+    @Column(name = "assigned_at")
+    private Instant assignedAt;
+
+    /** Set when the SLA reminder was pushed to the reviewer (null = not yet reminded). */
+    @Column(name = "reminder_sent_at")
+    private Instant reminderSentAt;
+
+    /** Set when the SLA escalation was pushed to admins (null = not yet escalated). */
+    @Column(name = "escalated_at")
+    private Instant escalatedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

@@ -4,6 +4,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { McqService } from '../../../core/services/mcq.service';
+import { AiService, AiReview } from '../../../core/services/ai.service';
 import { ReviewService } from '../../../core/services/review.service';
 import { AuditService, AuditLog } from '../../../core/services/audit.service';
 import { CommentService, QuestionComment } from '../../../core/services/comment.service';
@@ -13,6 +14,7 @@ import { ConfirmService } from '../../../shared/components/confirm-dialog/confir
 import { McqResponse, McqStatus } from '../../../core/models';
 import { statusBadgeClass, difficultyBadgeClass, statusLabel } from '../../../shared/utils/badge';
 import { ButtonDirective } from '../../../shared/components/button/button.directive';
+import { AiService, AiReview } from '../../../core/services/ai.service';
 
 @Component({
   selector: 'app-question-view',
@@ -166,6 +168,81 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
                 <div>
                   <p class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider text-[10px]">AI Similarity</p>
                   <p class="text-slate-700 dark:text-slate-300 mt-0.5">{{ (q.aiSimilarityScore * 100).toFixed(1) }}%</p>
+                </div>
+              }
+            </div>
+
+            <!-- AI Review Assistant -->
+            <div class="pt-4 border-t border-slate-100 dark:border-white/[0.08]">
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="material-icons text-[18px] text-violet-500" aria-hidden="true">auto_awesome</span>
+                  <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">AI Review Assistant</p>
+                </div>
+                @if (!aiReview && !aiLoading) {
+                  <button type="button" appBtn="accent" size="sm" (click)="analyze()">
+                    <span class="material-icons text-[15px]" aria-hidden="true">auto_awesome</span> Analyze with AI
+                  </button>
+                } @else if (aiReview && !aiLoading) {
+                  <button type="button" (click)="analyze()" class="press text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Re-analyze</button>
+                }
+              </div>
+
+              @if (aiLoading) {
+                <div class="flex items-center gap-2 text-sm text-slate-400 py-3">
+                  <span class="material-icons animate-spin text-[18px]" aria-hidden="true">autorenew</span> Analyzing question quality…
+                </div>
+              } @else if (aiError) {
+                <p class="text-sm text-rose-500 py-2">{{ aiError }}</p>
+              } @else if (aiReview; as r) {
+                <div class="animate-scale-in space-y-4">
+                  <div class="flex items-center gap-4 flex-wrap">
+                    <div class="relative w-14 h-14 flex-shrink-0">
+                      <svg viewBox="0 0 36 36" class="w-14 h-14 -rotate-90">
+                        <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3.5"></circle>
+                        <circle cx="18" cy="18" r="15.9155" fill="none" [attr.stroke]="scoreColor(r.qualityScore)" stroke-width="3.5"
+                                stroke-linecap="round" [attr.stroke-dasharray]="r.qualityScore + ', 100'"></circle>
+                      </svg>
+                      <span class="absolute inset-0 flex items-center justify-center text-sm font-extrabold" [style.color]="scoreColor(r.qualityScore)">{{ r.qualityScore }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quality score · suggested</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">{{ r.suggestedDifficulty }}</span>
+                        @if (!r.aiPowered) {
+                          <span class="text-[10px] text-slate-400 italic">heuristic (AI unavailable)</span>
+                        }
+                      </div>
+                      <p class="text-sm text-slate-700 dark:text-slate-200 mt-1">{{ r.summary }}</p>
+                    </div>
+                  </div>
+
+                  @if (r.issues.length) {
+                    <div class="space-y-1.5">
+                      @for (iss of r.issues; track $index) {
+                        <div class="flex items-start gap-2 text-xs">
+                          <span class="material-icons text-[15px] flex-shrink-0" [style.color]="issueColor(iss.severity)" aria-hidden="true">{{ issueIcon(iss.severity) }}</span>
+                          <span class="text-slate-600 dark:text-slate-300 leading-snug">{{ iss.message }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (r.answerExplanation) {
+                    <div class="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-600/30 px-3 py-2.5">
+                      <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Why the answer is correct</p>
+                      <p class="text-sm text-emerald-800 dark:text-emerald-200 leading-snug">{{ r.answerExplanation }}</p>
+                    </div>
+                  }
+
+                  @if (r.suggestions.length) {
+                    <div>
+                      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Suggestions</p>
+                      <ul class="list-disc pl-5 space-y-0.5">
+                        @for (s of r.suggestions; track $index) { <li class="text-sm text-slate-600 dark:text-slate-300">{{ s }}</li> }
+                      </ul>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -362,6 +439,7 @@ export class QuestionViewComponent implements OnInit {
   private readonly snack          = inject(SnackService);
   private readonly confirm        = inject(ConfirmService);
   private readonly dialog         = inject(MatDialog);
+  private readonly aiSvc          = inject(AiService);
 
   q: McqResponse | null = null;
   loading = true;
@@ -433,6 +511,11 @@ export class QuestionViewComponent implements OnInit {
   commentsError: string | null = null;
   draft = '';
   sending = false;
+
+  // AI Review Assistant
+  aiReview: AiReview | null = null;
+  aiLoading = false;
+  aiError: string | null = null;
 
   ngOnInit(): void {
     this.loadQuestion();
@@ -592,6 +675,24 @@ export class QuestionViewComponent implements OnInit {
       next: comment => { this.comments = [...this.comments, comment]; this.draft = ''; this.sending = false; },
       error: () => { this.sending = false; },
     });
+  }
+
+  // ── AI Review Assistant ──────────────────────────────────────────────────────
+  analyze(): void {
+    if (!this.q || this.aiLoading) return;
+    this.aiLoading = true;
+    this.aiError = null;
+    this.aiSvc.reviewQuestion(this.q.id).subscribe({
+      next: res => { this.aiReview = res.data; this.aiLoading = false; },
+      error: () => { this.aiError = 'AI analysis failed — please try again.'; this.aiLoading = false; },
+    });
+  }
+  scoreColor(s: number): string { return s >= 75 ? '#10b981' : s >= 50 ? '#f59e0b' : '#ef4444'; }
+  issueColor(sev: string): string {
+    return sev === 'CRITICAL' ? '#ef4444' : sev === 'WARNING' ? '#f59e0b' : '#94a3b8';
+  }
+  issueIcon(sev: string): string {
+    return sev === 'CRITICAL' ? 'error' : sev === 'WARNING' ? 'warning' : 'info';
   }
 
   toggleHistory(): void {

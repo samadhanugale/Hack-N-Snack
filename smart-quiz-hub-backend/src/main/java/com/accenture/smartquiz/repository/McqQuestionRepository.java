@@ -96,6 +96,12 @@ public interface McqQuestionRepository extends JpaRepository<McqQuestion, Long>,
     @Query(name = "McqQuestion.findUnassignedReadyForReview")
     List<McqQuestion> findUnassignedReadyForReview();
 
+    /**
+     * Review SLA: in-flight assignments with an active clock — used by the SLA scheduler to find
+     * stale reviews. Filtered to a status (UNDER_REVIEW) that has both a reviewer and an assignedAt.
+     */
+    List<McqQuestion> findByStatusAndReviewerIsNotNullAndAssignedAtIsNotNull(McqStatus status);
+
     // ── Date-range analytics (Epic 2) — callers pass concrete [start, end) bounds ──
 
     /** [status, count] for questions created within the range. */
