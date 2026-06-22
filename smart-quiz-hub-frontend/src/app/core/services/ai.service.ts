@@ -13,6 +13,15 @@ export interface AiReviewIssue {
   message: string;
 }
 
+/** AI verdict on the correct answer + an optional proposed corrected option set. */
+export interface AiAnswerCheck {
+  correctAnswerInOptions: boolean;   // is the genuinely-correct answer among the current options?
+  currentAnswerCorrect: boolean;     // are the currently-marked correct option(s) actually right?
+  correctAnswerText: string;         // the correct answer in plain words
+  proposedOptions: string[];         // corrected full option list to apply (empty = no change)
+  proposedCorrectIndices: number[];  // 0-based correct indices within proposedOptions
+}
+
 /** AI Review Assistant analysis of an MCQ. */
 export interface AiReview {
   qualityScore: number;          // 0–100
@@ -22,6 +31,7 @@ export interface AiReview {
   answerExplanation: string;
   suggestions: string[];
   aiPowered: boolean;            // false → heuristic fallback (AI unavailable)
+  answerCheck?: AiAnswerCheck;
 }
 
 /**

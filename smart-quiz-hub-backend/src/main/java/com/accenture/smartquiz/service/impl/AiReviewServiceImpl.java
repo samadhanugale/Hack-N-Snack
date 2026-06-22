@@ -161,7 +161,8 @@ public class AiReviewServiceImpl implements AiReviewService {
             }
         }
 
-        return new AiReviewResponse(score, difficulty, summary, issues, answerExplanation, suggestions, true);
+        AiReviewResponse.AnswerCheck answerCheck = parseAnswerCheck(node.path("answerCheck"), q);
+        return new AiReviewResponse(score, difficulty, summary, issues, answerExplanation, suggestions, true, answerCheck);
     }
 
     private String buildPrompt(McqQuestion q) {
@@ -194,12 +195,29 @@ public class AiReviewServiceImpl implements AiReviewService {
                   "summary": "<one sentence overall assessment>",
                   "issues": [ { "severity": "INFO|WARNING|CRITICAL", "message": "<short issue>" } ],
                   "answerExplanation": "<why the correct option(s) are right>",
-                  "suggestions": [ "<short improvement tip>" ]
+                  "suggestions": [ "<short improvement tip>" ],
+                  "answerCheck": {
+                    "correctAnswerInOptions": <true|false — is the genuinely correct answer present among the options listed above?>,
+                    "currentAnswerCorrect": <true|false — are the option(s) currently MARKED CORRECT actually right?>,
+                    "correctAnswerText": "<state the genuinely correct answer in plain words>",
+                    "proposedOptions": [ "<corrected option 1>", "<corrected option 2>", "<corrected option 3>", "<corrected option 4>" ],
+                    "proposedCorrectIndices": [ <0-based index/indices of the correct option(s) within proposedOptions> ]
+                  }
                 }
 
                 When building "issues", flag: ambiguous wording, multiple defensible correct answers,
                 weak or implausible distractors, grammar problems, and any factual doubt. If there are no
                 issues, return an empty array.
+
+                For "answerCheck": determine the genuinely correct answer.
+                - If the marked answer is WRONG but the correct answer IS one of the listed options, set
+                  correctAnswerInOptions=true, currentAnswerCorrect=false, and return proposedOptions as the
+                  SAME options with proposedCorrectIndices pointing to the right one(s).
+                - If the correct answer is NOT among the options, set correctAnswerInOptions=false and return
+                  proposedOptions as a corrected full set of 4 options (fixing/replacing as needed) with
+                  proposedCorrectIndices marking the correct one(s).
+                - If the question is already correct, set both booleans true and return proposedOptions as [].
+                Always keep proposedOptions to 4 concise options when you provide them.
                 """.formatted(
                 q.getQuestionStem() == null ? "" : q.getQuestionStem(),
                 options.toString(),
@@ -279,7 +297,7 @@ public class AiReviewServiceImpl implements AiReviewService {
         }
 
         return new AiReviewResponse(score, difficulty, "Heuristic quality estimate (AI unavailable).",
-                issues, heuristicExplanation(q), suggestions, false);
+                issues, heuristicExplanation(q), suggestions, false, heuristicAnswerCheck(q));
     }
 
     private String heuristicExplanation(McqQuestion q) {
@@ -298,6 +316,54 @@ public class AiReviewServiceImpl implements AiReviewService {
         return correct.size() == 1
                 ? "Option " + joined + " is marked as the correct answer."
                 : "Options " + joined + " are marked as correct answers.";
+    }
+
+    /** Parse the model's answerCheck; only surfaces a proposed fix when it's coherent. */
+    private AiReviewResponse.AnswerCheck parseAnswerCheck(JsonNode ac, McqQuestion q) {
+        if (ac == null || !ac.isObject()) {
+            return heuristicAnswerCheck(q);
+        }
+        boolean inOptions = ac.path("correctAnswerInOptions").asBoolean(true);
+        boolean currentCorrect = ac.path("currentAnswerCorrect").asBoolean(true);
+        String text = ac.path("correctAnswerText").asText("").trim();
+        if (text.isBlank()) {
+            text = heuristicExplanation(q);
+        }
+
+        List<String> proposed = new ArrayList<>();
+        JsonNode po = ac.path("proposedOptions");
+        if (po.isArray()) {
+            for (JsonNode o : po) {
+                String t = o.asText("").trim();
+                if (!t.isBlank()) {
+                    proposed.add(t);
+                }
+            }
+        }
+        List<Integer> idx = new ArrayList<>();
+        JsonNode pi = ac.path("proposedCorrectIndices");
+        if (pi.isArray()) {
+            for (JsonNode n : pi) {
+                int v = n.asInt(-1);
+                if (v >= 0 && v < proposed.size() && !idx.contains(v)) {
+                    idx.add(v);
+                }
+            }
+        }
+        // Only surface a proposed fix when it's coherent (>= 2 options and >= 1 correct index).
+        if (proposed.size() < 2 || idx.isEmpty()) {
+            proposed = List.of();
+            idx = List.of();
+        }
+        return new AiReviewResponse.AnswerCheck(inOptions, currentCorrect, text, proposed, idx);
+    }
+
+    /** Heuristic answer-check (AI unavailable): never fabricates a fix. */
+    private AiReviewResponse.AnswerCheck heuristicAnswerCheck(McqQuestion q) {
+        List<Integer> correct = q.getCorrectOptionIndices() == null ? List.of() : q.getCorrectOptionIndices();
+        boolean inOptions = !correct.isEmpty();
+        return new AiReviewResponse.AnswerCheck(
+                inOptions, inOptions, heuristicExplanation(q), List.of(), List.of());
     }
 
     // ------------------------------------------------------------------

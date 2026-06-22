@@ -28,7 +28,8 @@ public record AiReviewResponse(
         List<Issue> issues,
         String answerExplanation,
         List<String> suggestions,
-        boolean aiPowered
+        boolean aiPowered,
+        AnswerCheck answerCheck
 ) {
 
     /**
@@ -38,5 +39,24 @@ public record AiReviewResponse(
      * @param message  human-readable description of the issue
      */
     public record Issue(String severity, String message) {
+    }
+
+    /**
+     * The AI's verdict on the question's correct answer, plus an optional proposed fix the
+     * user can accept to rewrite the options in one click.
+     *
+     * @param correctAnswerInOptions true if the actual correct answer appears among the current options
+     * @param currentAnswerCorrect   true if the option(s) currently marked correct are actually right
+     * @param correctAnswerText      the correct answer stated plainly (always provided)
+     * @param proposedOptions        a corrected full option list to apply; empty when no change is needed
+     * @param proposedCorrectIndices 0-based indices of the correct option(s) within {@code proposedOptions}
+     */
+    public record AnswerCheck(
+            boolean correctAnswerInOptions,
+            boolean currentAnswerCorrect,
+            String correctAnswerText,
+            List<String> proposedOptions,
+            List<Integer> proposedCorrectIndices
+    ) {
     }
 }

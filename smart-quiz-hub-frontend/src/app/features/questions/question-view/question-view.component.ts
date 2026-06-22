@@ -242,6 +242,57 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
                       </ul>
                     </div>
                   }
+
+                  <!-- Correct-answer verdict + accept-fix -->
+                  @if (r.answerCheck; as ac) {
+                    <div class="rounded-xl border px-3.5 py-3"
+                         [class]="ac.currentAnswerCorrect
+                           ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-600/30'
+                           : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-600/40'">
+                      <p class="text-[10px] font-bold uppercase tracking-widest mb-1.5"
+                         [class]="ac.currentAnswerCorrect ? 'text-emerald-600' : 'text-amber-600'">Correct answer</p>
+
+                      @if (!ac.correctAnswerInOptions) {
+                        <p class="text-sm text-amber-700 dark:text-amber-300 flex items-start gap-1.5">
+                          <span class="material-icons text-[16px] mt-0.5 flex-shrink-0" aria-hidden="true">report</span>
+                          <span>The correct answer is <strong>not in the options</strong>. It should be: <strong>{{ ac.correctAnswerText }}</strong></span>
+                        </p>
+                      } @else if (!ac.currentAnswerCorrect) {
+                        <p class="text-sm text-amber-700 dark:text-amber-300 flex items-start gap-1.5">
+                          <span class="material-icons text-[16px] mt-0.5 flex-shrink-0" aria-hidden="true">warning</span>
+                          <span>The marked answer looks wrong. Correct answer: <strong>{{ ac.correctAnswerText }}</strong></span>
+                        </p>
+                      } @else {
+                        <p class="text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                          <span class="material-icons text-[16px] flex-shrink-0" aria-hidden="true">check_circle</span>
+                          <span>{{ ac.correctAnswerText }}</span>
+                        </p>
+                      }
+
+                      @if (ac.proposedOptions.length) {
+                        <div class="mt-3 rounded-lg bg-white/70 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 p-3">
+                          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Suggested options</p>
+                          <ul class="space-y-1.5 mb-3">
+                            @for (opt of ac.proposedOptions; track $index; let i = $index) {
+                              <li class="flex items-start gap-2 text-sm">
+                                <span class="w-5 h-5 rounded flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-px"
+                                      [class]="ac.proposedCorrectIndices.includes(i) ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'">{{ optionLabel(i) }}</span>
+                                <span class="text-slate-700 dark:text-slate-200" [class.font-semibold]="ac.proposedCorrectIndices.includes(i)">{{ opt }}</span>
+                              </li>
+                            }
+                          </ul>
+                          @if (canEdit()) {
+                            <button type="button" appBtn="success" size="sm" [disabled]="applyingFix" (click)="applySuggestedFix()">
+                              <span class="material-icons text-[15px]" aria-hidden="true">{{ applyingFix ? 'hourglass_empty' : 'auto_fix_high' }}</span>
+                              {{ applyingFix ? 'Applying…' : 'Accept & apply fix' }}
+                            </button>
+                          } @else {
+                            <p class="text-[11px] text-slate-400">Only the creator or an admin can apply this fix.</p>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -686,6 +737,34 @@ export class QuestionViewComponent implements OnInit {
       error: () => { this.aiError = 'AI analysis failed — please try again.'; this.aiLoading = false; },
     });
   }
+  applyingFix = false;
+  /** Accept the AI's proposed options and rewrite the question (creator/admin, editable status). */
+  applySuggestedFix(): void {
+    const q = this.q;
+    const ac = this.aiReview?.answerCheck;
+    if (!q || !ac || !ac.proposedOptions.length || this.applyingFix) return;
+    this.applyingFix = true;
+    this.mcqSvc.updateQuestion(q.id, {
+      questionStem: q.questionStem,
+      options: ac.proposedOptions,
+      correctOptionIndices: ac.proposedCorrectIndices,
+      difficulty: q.difficulty,
+      stackId: q.stackId,
+      topicId: q.topicId,
+    }).subscribe({
+      next: res => {
+        this.q = res.data;
+        this.aiReview = null;          // reset panel; user can re-analyze the updated question
+        this.applyingFix = false;
+        this.snack.success('AI-suggested options applied');
+      },
+      error: err => {
+        this.applyingFix = false;
+        this.snack.error(err?.error?.message ?? 'Failed to apply suggestion');
+      },
+    });
+  }
+
   scoreColor(s: number): string { return s >= 75 ? '#10b981' : s >= 50 ? '#f59e0b' : '#ef4444'; }
   issueColor(sev: string): string {
     return sev === 'CRITICAL' ? '#ef4444' : sev === 'WARNING' ? '#f59e0b' : '#94a3b8';
