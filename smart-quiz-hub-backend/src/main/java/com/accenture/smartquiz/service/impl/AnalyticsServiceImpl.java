@@ -15,8 +15,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -58,12 +64,29 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         Map<String, Long> byStack = toCountMap(mcqRepo.countByStackInRange(s, e));
         Map<String, Long> byDifficulty = toCountMap(mcqRepo.countByDifficultyInRange(s, e));
 
-        List<AnalyticsOverviewResponse.WeeklyCount> trend = mcqRepo.weeklyCreationTrendInRange(s, e).stream()
-                .map(r -> AnalyticsOverviewResponse.WeeklyCount.builder()
-                        .week(r[0].toString())
-                        .count(((Number) r[1]).longValue())
-                        .build())
-                .toList();
+        // Zero-filled, continuous weekly series so the trend always renders (no gaps,
+        // and never a single lonely point). Buckets are Mondays (matches date_trunc('week')).
+        Map<String, Long> weeklyCounts = new HashMap<>();
+        mcqRepo.weeklyCreationTrendInRange(s, e)
+                .forEach(r -> weeklyCounts.put(r[0].toString(), ((Number) r[1]).longValue()));
+
+        LocalDate endMonday = LocalDate.ofInstant(e, ZoneOffset.UTC)
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate startMonday = (start != null)
+                ? LocalDate.ofInstant(start, ZoneOffset.UTC).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                : endMonday.minusWeeks(7);                       // default window: last 8 weeks
+        if (ChronoUnit.WEEKS.between(startMonday, endMonday) > 25) {
+            startMonday = endMonday.minusWeeks(25);              // cap series length
+        }
+        if (startMonday.isAfter(endMonday)) startMonday = endMonday;
+
+        List<AnalyticsOverviewResponse.WeeklyCount> trend = new ArrayList<>();
+        for (LocalDate wk = startMonday; !wk.isAfter(endMonday); wk = wk.plusWeeks(1)) {
+            trend.add(AnalyticsOverviewResponse.WeeklyCount.builder()
+                    .week(wk.toString())
+                    .count(weeklyCounts.getOrDefault(wk.toString(), 0L))
+                    .build());
+        }
 
         return AnalyticsOverviewResponse.builder()
                 .byStatus(byStatus)

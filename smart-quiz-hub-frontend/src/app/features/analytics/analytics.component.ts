@@ -154,27 +154,26 @@ export class AnalyticsComponent implements OnInit {
       }));
   }
 
-  // Weekly trend → SVG path strings over a 300×100 viewBox
-  private trendXY(): { x: number; y: number }[] {
+  // Weekly trend → vertical bar chart (robust for any number of weeks, incl. one).
+  weekMax = computed(() => Math.max(1, ...(this.overview()?.weeklyTrend ?? []).map(w => w.count)));
+  trendTotal = computed(() => (this.overview()?.weeklyTrend ?? []).reduce((a, w) => a + w.count, 0));
+  trendBars = computed(() => {
     const t = this.overview()?.weeklyTrend ?? [];
-    if (!t.length) return [];
-    const max = Math.max(1, ...t.map(w => w.count));
-    const n = t.length;
-    return t.map((w, i) => ({
-      x: n === 1 ? 150 : (i / (n - 1)) * 300,
-      y: 95 - (w.count / max) * 82,
+    const max = this.weekMax();
+    return t.map(w => ({
+      count: w.count,
+      pct: Math.round((w.count / max) * 100),
+      label: this.weekLabel(w.week),
     }));
-  }
-  trendLine = computed(() => this.trendXY().map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '));
-  trendArea = computed(() => {
-    const pts = this.trendXY();
-    if (!pts.length) return '';
-    const line = pts.map(p => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-    return `M${pts[0].x.toFixed(1)},100 ${line} L${pts[pts.length - 1].x.toFixed(1)},100 Z`;
   });
-  trendPoints = computed(() => this.trendXY());
-  trendLabels = computed(() => this.overview()?.weeklyTrend?.map(w => w.week) ?? []);
   hasTrend = computed(() => (this.overview()?.weeklyTrend?.length ?? 0) > 0);
+
+  /** "2026-06-15" → "Jun 15" */
+  weekLabel(week: string): string {
+    const d = new Date(week + 'T00:00:00Z');
+    if (isNaN(d.getTime())) return week;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  }
 
   // ── Users tab ────────────────────────────────────────────────
   maxWorkload = computed(() => Math.max(1, ...this.workload().map(w => w.pendingCount)));
