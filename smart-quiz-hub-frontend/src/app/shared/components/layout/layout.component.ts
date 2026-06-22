@@ -1,8 +1,10 @@
 import { Component, OnInit, OnDestroy, HostListener, computed, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../.././../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { AppNotification } from '../../../core/models';
 import { Subscription, interval } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
@@ -19,12 +21,13 @@ interface NavItem {
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, MatTooltipModule],
   templateUrl: './layout.component.html',
 })
 export class LayoutComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   notifService = inject(NotificationService);
+  theme = inject(ThemeService);
   private router = inject(Router);
   collapsed = signal(false);
   mobileOpen = signal(false);

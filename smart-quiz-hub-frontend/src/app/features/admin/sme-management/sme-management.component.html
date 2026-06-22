@@ -79,7 +79,7 @@
             </div>
 
             <!-- Stacks -->
-            @if ((row.sme.stacks?.length ?? 0) > 0) {
+            @if (row.sme.stacks.length > 0) {
               <div class="flex flex-wrap gap-1.5">
                 @for (stack of row.sme.stacks; track stack.id) {
                   <span class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-semibold border border-indigo-100">

@@ -24,7 +24,6 @@ import { AssignReviewerDialogComponent } from './assign-reviewer-dialog.componen
 import { ConfirmService } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AiGenerateDialogComponent } from '../../questions/ai-generate-dialog/ai-generate-dialog.component';
 import { QuestionFormComponent } from '../../questions/question-form/question-form.component';
-import { QuestionDetailDialogComponent } from '../../questions/question-detail/question-detail-dialog.component';
 
 @Component({
   selector: 'app-question-bank',
@@ -307,7 +306,7 @@ export class QuestionBankComponent implements OnInit, OnDestroy {
   }
 
   openView(q: McqResponse): void {
-    this.dialog.open(QuestionDetailDialogComponent, { data: { question: q }, maxWidth: '720px', width: '100%' });
+    window.open('/questions/' + q.id, '_blank');
   }
 
   openEdit(q: McqResponse): void {
@@ -359,9 +358,11 @@ export class QuestionBankComponent implements OnInit, OnDestroy {
   }
 
   exportXlsx(): void {
+    const f = this.filters();
     const stackId = this.selectedStackId();
-    const status = (this.filters()['status'] as McqStatus | null) ?? 'APPROVED';
-    this.mcqSvc.exportQuestions({ stackId, status }).subscribe(blob => {
+    const status = (f['status'] as McqStatus | null) ?? 'APPROVED';
+    const difficulty = (f['difficulty'] as Difficulty | null) ?? undefined;
+    this.mcqSvc.exportQuestions({ stackId, status, difficulty }).subscribe(blob => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = 'questions.xlsx'; a.click();

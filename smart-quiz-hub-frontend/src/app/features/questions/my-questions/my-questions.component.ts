@@ -12,7 +12,6 @@ import { StackService } from '../../../core/services/stack.service';
 import { SnackService } from '../../../core/services/snack.service';
 import { McqResponse, McqStatus, Difficulty, StackSummary } from '../../../core/models';
 import { QuestionFormComponent } from '../question-form/question-form.component';
-import { QuestionDetailDialogComponent } from '../question-detail/question-detail-dialog.component';
 import { AiGenerateDialogComponent } from '../ai-generate-dialog/ai-generate-dialog.component';
 import { RelativeTimePipe } from '../../../shared/pipes/relative-time.pipe';
 import { TableHeaderCellComponent } from '../../../shared/components/table-header-cell/table-header-cell.component';
@@ -207,7 +206,7 @@ export class MyQuestionsComponent implements OnInit, OnDestroy {
   goBulkUpload(): void { this.router.navigate(['/bulk-upload']); }
 
   openView(q: McqResponse): void {
-    this.dialog.open(QuestionDetailDialogComponent, { data: { question: q }, maxWidth: '720px', width: '100%' });
+    window.open('/questions/' + q.id, '_blank');
   }
 
   openEdit(q: McqResponse): void {

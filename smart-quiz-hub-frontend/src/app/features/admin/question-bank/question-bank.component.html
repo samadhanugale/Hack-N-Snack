@@ -123,9 +123,10 @@
               </td>
 
               <td class="px-4 py-4 max-w-[220px]">
-                <span class="text-slate-800 font-medium text-xs leading-snug line-clamp-2" [title]="q.questionStem">
+                <span class="text-slate-800 dark:text-slate-200 font-medium text-xs leading-snug line-clamp-2" [title]="q.questionStem">
                   {{ truncate(q.questionStem) }}
                 </span>
+                <span class="font-mono text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 block">#{{ q.id }}</span>
               </td>
               <td class="px-4 py-4 text-slate-500 text-xs whitespace-nowrap">{{ q.creatorName }}</td>
               <td class="px-4 py-4">

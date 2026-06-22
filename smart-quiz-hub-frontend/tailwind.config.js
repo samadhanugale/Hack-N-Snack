@@ -1,26 +1,43 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./src/**/*.{html,ts}'],
+  darkMode: 'class',
   corePlugins: {
     preflight: false,
   },
   theme: {
     extend: {
       colors: {
-        brand: {
-          50:  '#EEF2FF',
-          100: '#E0E7FF',
-          200: '#C7D2FE',
-          300: '#A5B4FC',
-          400: '#818CF8',
-          500: '#6366F1',
-          600: '#4F46E5',
-          700: '#4338CA',
-          800: '#3730A3',
-          900: '#312E81',
-          950: '#1E1B4B',
+        // Accenture purple scale — overrides Tailwind's built-in indigo so every
+        // indigo-* class across templates picks up the Accenture brand colour.
+        indigo: {
+          50:  '#F5E8FF',
+          100: '#EAD1FF',
+          200: '#D4A3FF',
+          300: '#BF75FF',
+          400: '#AA47FF',
+          500: '#A100FF',
+          600: '#8100CC',
+          700: '#610099',
+          800: '#410066',
+          900: '#200033',
+          950: '#110018',
         },
-        sidebar: '#0B1020',
+        // Brand alias (same scale — used anywhere brand-* is referenced directly)
+        brand: {
+          50:  '#F5E8FF',
+          100: '#EAD1FF',
+          200: '#D4A3FF',
+          300: '#BF75FF',
+          400: '#AA47FF',
+          500: '#A100FF',
+          600: '#8100CC',
+          700: '#610099',
+          800: '#410066',
+          900: '#200033',
+          950: '#110018',
+        },
+        sidebar: '#000000',
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
@@ -32,9 +49,9 @@ module.exports = {
       },
       boxShadow: {
         card: '0 1px 3px rgba(16,24,40,0.04), 0 4px 14px rgba(16,24,40,0.06)',
-        'card-hover': '0 18px 40px rgba(79,70,229,0.18)',
-        lift: '0 22px 48px -12px rgba(79,70,229,0.35)',
-        glow: '0 0 0 4px rgba(99,102,241,0.12)',
+        'card-hover': '0 18px 40px rgba(161,0,255,0.18)',
+        lift: '0 22px 48px -12px rgba(161,0,255,0.35)',
+        glow: '0 0 0 4px rgba(161,0,255,0.12)',
         dialog: '0 30px 70px rgba(16,24,40,0.28)',
       },
       keyframes: {

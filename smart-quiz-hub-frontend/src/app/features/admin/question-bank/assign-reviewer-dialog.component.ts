@@ -93,7 +93,7 @@ export interface AssignReviewerDialogData {
                 </div>
 
                 <div class="flex gap-1 flex-wrap justify-end max-w-[140px]">
-                  @for (stack of (sme.stacks ?? []).slice(0, 2); track stack.id) {
+                  @for (stack of sme.stacks.slice(0, 2); track stack.id) {
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
                           [class]="selectedId === sme.id
                             ? 'bg-indigo-100 text-indigo-700'
@@ -101,7 +101,7 @@ export interface AssignReviewerDialogData {
                       {{ stack.stackName }}
                     </span>
                   }
-                  @if ((sme.stacks ?? []).length > 2) {
+                  @if (sme.stacks.length > 2) {
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-400">
                       +{{ sme.stacks.length - 2 }}
                     </span>

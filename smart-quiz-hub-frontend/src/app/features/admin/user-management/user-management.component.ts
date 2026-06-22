@@ -1,6 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AdminUser } from '../../../core/models';
@@ -31,7 +30,7 @@ function userValue(u: AdminUser, key: string): string {
   selector: 'app-user-management',
   standalone: true,
   imports: [
-    FormsModule, DatePipe, MatDialogModule, MatTooltipModule,
+    FormsModule, MatDialogModule, MatTooltipModule,
     ButtonDirective, TableHeaderCellComponent, RelativeTimePipe, CountUpDirective,
   ],
   templateUrl: './user-management.component.html',

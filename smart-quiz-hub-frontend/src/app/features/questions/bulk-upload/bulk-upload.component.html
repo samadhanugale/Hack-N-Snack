@@ -126,15 +126,40 @@
             </div>
           </div>
 
-          <!-- Errors -->
+          <!-- Duplicate matches (rows that matched existing questions) -->
+          @if (result()!.duplicates && result()!.duplicates!.length > 0) {
+            <div>
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Duplicate Matches</p>
+              <div class="border border-amber-200 dark:border-amber-600/30 rounded-xl divide-y divide-amber-100 dark:divide-amber-600/20 max-h-64 overflow-y-auto">
+                @for (d of result()!.duplicates!; track d.rowNumber) {
+                  <div class="flex items-start gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-900/10">
+                    <span class="material-icons text-amber-400 text-[16px] mt-0.5 flex-shrink-0" aria-hidden="true">content_copy</span>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs font-bold text-amber-700 dark:text-amber-300">Row {{ d.rowNumber }} — {{ d.similarityPercent | number:'1.0-0' }}% similar</p>
+                      <p class="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">Your row: {{ d.questionStem }}</p>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-500 truncate">Matched: {{ d.matchedStem }}</p>
+                    </div>
+                    <a [href]="'/questions/' + d.matchedId" target="_blank" rel="noopener"
+                       class="shrink-0 flex items-center gap-1 text-[11px] font-bold text-indigo-500 dark:text-indigo-400 hover:underline whitespace-nowrap"
+                       [title]="'Open question #' + d.matchedId">
+                      <span class="material-icons text-[13px]" aria-hidden="true">open_in_new</span>
+                      #{{ d.matchedId }}
+                    </a>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Other errors -->
           @if (result()!.errors.length > 0) {
             <div>
               <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Errors</p>
-              <div role="alert" class="bg-rose-50 border border-rose-100 rounded-xl divide-y divide-rose-100 max-h-48 overflow-y-auto">
+              <div role="alert" class="bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-600/30 rounded-xl divide-y divide-rose-100 dark:divide-rose-600/20 max-h-48 overflow-y-auto">
                 @for (err of result()!.errors; track $index) {
                   <div class="flex items-start gap-2 px-4 py-3">
                     <span class="material-icons text-rose-400 text-[14px] mt-0.5 flex-shrink-0" aria-hidden="true">error_outline</span>
-                    <p class="text-xs text-rose-700">{{ err }}</p>
+                    <p class="text-xs text-rose-700 dark:text-rose-300">{{ err }}</p>
                   </div>
                 }
               </div>

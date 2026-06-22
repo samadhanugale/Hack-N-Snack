@@ -31,6 +31,11 @@ export const routes: Routes = [
           import('./features/questions/questions-hub/questions-hub.component').then(m => m.QuestionsHubComponent)
       },
       {
+        path: 'questions/:id',
+        loadComponent: () =>
+          import('./features/questions/question-view/question-view.component').then(m => m.QuestionViewComponent)
+      },
+      {
         path: 'bulk-upload',
         loadComponent: () =>
           import('./features/questions/bulk-upload/bulk-upload.component').then(m => m.BulkUploadComponent)

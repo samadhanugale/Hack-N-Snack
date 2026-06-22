@@ -6,14 +6,13 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
-import { DatePipe, NgClass } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ReviewService } from '../../../core/services/review.service';
 import { SnackService } from '../../../core/services/snack.service';
 import { McqResponse } from '../../../core/models';
 import { RelativeTimePipe } from '../../../shared/pipes/relative-time.pipe';
 import { ColumnFilterComponent } from '../../../shared/components/column-filter/column-filter.component';
 import { ButtonDirective } from '../../../shared/components/button/button.directive';
-import { QuestionDetailDialogComponent } from '../../questions/question-detail/question-detail-dialog.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { ConfirmService } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { applyFilters, applySort, distinctOptions, SortState } from '../../../shared/utils/table-ops';
@@ -27,7 +26,7 @@ type ReviewTab = 'pending' | 'reviewed';
   standalone: true,
   imports: [
     MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule,
-    FormsModule, NgClass, DatePipe, RelativeTimePipe, ColumnFilterComponent, ButtonDirective,
+    FormsModule, DatePipe, RelativeTimePipe, ColumnFilterComponent, ButtonDirective,
     PageHeaderComponent
   ],
   templateUrl: './pending-reviews.component.html',
@@ -116,7 +115,7 @@ export class PendingReviewsComponent implements OnInit {
   nextPage(): void { if (this.page() < this.totalPages() - 1) { this.page.update(p => p + 1); this.syncUrl(); } }
 
   openView(q: McqResponse): void {
-    this.dialog.open(QuestionDetailDialogComponent, { data: { question: q }, maxWidth: '720px', width: '100%' });
+    window.open('/questions/' + q.id, '_blank');
   }
 
   private syncUrl(): void {

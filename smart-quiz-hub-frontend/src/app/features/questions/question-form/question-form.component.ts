@@ -54,9 +54,9 @@ export class QuestionFormComponent implements OnInit {
     this.data.question?.status === 'MODIFICATION_REQUESTED');
 
   readonly difficulties = [
-    { value: 'EASY',   label: 'Easy',   classes: 'border-emerald-300 text-emerald-700 bg-emerald-50', activeClasses: 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' },
-    { value: 'MEDIUM', label: 'Medium', classes: 'border-amber-300 text-amber-700 bg-amber-50',       activeClasses: 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/30' },
-    { value: 'HARD',   label: 'Hard',   classes: 'border-rose-300 text-rose-700 bg-rose-50',          activeClasses: 'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-500/30' },
+    { value: 'EASY',   label: 'Easy',   classes: 'border-emerald-300 text-emerald-700 bg-emerald-50 dark:border-emerald-600/50 dark:text-emerald-400 dark:bg-emerald-900/20', activeClasses: 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' },
+    { value: 'MEDIUM', label: 'Medium', classes: 'border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-600/50 dark:text-amber-400 dark:bg-amber-900/20',             activeClasses: 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/30' },
+    { value: 'HARD',   label: 'Hard',   classes: 'border-rose-300 text-rose-700 bg-rose-50 dark:border-rose-600/50 dark:text-rose-400 dark:bg-rose-900/20',                   activeClasses: 'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-500/30' },
   ];
 
   form = this.fb.group({

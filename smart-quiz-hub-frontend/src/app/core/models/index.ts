@@ -158,11 +158,21 @@ export interface UpdateUserRequest {
   stackIds?: number[];
 }
 
+export interface BulkRowDuplicate {
+  rowNumber: number;
+  questionStem: string;
+  similarityPercent: number;
+  matchedId: number;
+  matchedStem: string;
+  matchedStatus: McqStatus;
+}
+
 export interface BulkUploadResponse {
   totalRows: number;
   successCount: number;
   failureCount: number;
   errors: string[];
+  duplicates: BulkRowDuplicate[] | null;
 }
 
 export interface TopicDetail {

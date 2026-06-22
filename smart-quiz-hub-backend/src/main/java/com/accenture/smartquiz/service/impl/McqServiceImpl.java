@@ -272,6 +272,7 @@ public class McqServiceImpl implements McqService {
     @Transactional
     public BulkUploadResponse bulkUpload(MultipartFile file, SmartQuizUserDetails currentUser) {
         List<String> errors = new ArrayList<>();
+        List<BulkUploadResponse.BulkRowDuplicate> duplicates = new ArrayList<>();
         int success = 0;
         int dataRows = 0;
 
@@ -317,6 +318,25 @@ public class McqServiceImpl implements McqService {
                 try {
                     mcqRepo.save(parseRow(row, col, optionCols, currentUser));
                     success++;
+                } catch (DuplicateQuestionException dup) {
+                    int rowNum = row.getRowNum() + 1;
+                    Integer stemCol = col.containsKey("question") ? col.get("question") : null;
+                    String stem = stemCol != null ? getCellString(row, stemCol) : "";
+                    if (!dup.getSimilar().isEmpty()) {
+                        SimilarQuestionResponse top = dup.getSimilar().get(0);
+                        duplicates.add(BulkUploadResponse.BulkRowDuplicate.builder()
+                                .rowNumber(rowNum)
+                                .questionStem(stem)
+                                .similarityPercent(dup.getMaxSimilarityPercent())
+                                .matchedId(top.getId())
+                                .matchedStem(top.getQuestionStem())
+                                .matchedStatus(top.getStatus() != null ? top.getStatus().name() : null)
+                                .build());
+                    } else {
+                        // No structured match available — fall back to plain error
+                        errors.add("Row " + rowNum + " (duplicate): " + dup.getMessage());
+                    }
+                    log.warn("Bulk upload row {} duplicate: {}", rowNum, dup.getMessage());
                 } catch (Exception e) {
                     errors.add("Row " + (row.getRowNum() + 1) + ": " + e.getMessage());
                     log.warn("Bulk upload row {} failed: {}", row.getRowNum() + 1, e.getMessage());
@@ -330,8 +350,9 @@ public class McqServiceImpl implements McqService {
         return BulkUploadResponse.builder()
                 .totalRows(dataRows)
                 .successCount(success)
-                .failureCount(errors.size())
+                .failureCount(errors.size() + duplicates.size())
                 .errors(errors)
+                .duplicates(duplicates)
                 .build();
     }
 
@@ -375,8 +396,12 @@ public class McqServiceImpl implements McqService {
                                  SmartQuizUserDetails currentUser) {
         String questionStem = getCellString(row, col.get("question"));
         if (questionStem.isBlank()) throw new IllegalArgumentException("Question is empty");
-        if (mcqRepo.existsByQuestionStemIgnoreCase(questionStem))
-            throw new IllegalArgumentException("Duplicate question — already exists in the question bank");
+        mcqRepo.findFirstByQuestionStemIgnoreCase(questionStem).ifPresent(existing -> {
+            SimilarQuestionResponse match = McqMapper.toSimilarResponse(existing, 1.0);
+            throw new DuplicateQuestionException(
+                "Duplicate question — already exists in the question bank (ID: " + existing.getId() + ")",
+                100.0, 100, List.of(match));
+        });
 
         // Options are contiguous from "Option A": stop at the first blank.
         List<String> options = new ArrayList<>();
@@ -400,15 +425,12 @@ public class McqServiceImpl implements McqService {
         }
 
         String stackName = getCellString(row, col.get("stack"));
-        TechnologyStack stack = stackRepo.findAll().stream()
-                .filter(s -> s.getStackName().equalsIgnoreCase(stackName))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown stack: " + stackName));
+        if (stackName.isBlank()) throw new IllegalArgumentException("Stack is empty");
+        TechnologyStack stack = resolveOrCreateStack(stackName);
 
         String topicName = getCellString(row, col.get("topic"));
-        Topic topic = topicRepo.findByStackIdAndTopicNameIgnoreCase(stack.getId(), topicName)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Unknown topic '" + topicName + "' in stack '" + stackName + "'"));
+        if (topicName.isBlank()) throw new IllegalArgumentException("Topic is empty");
+        Topic topic = resolveOrCreateTopic(stack, topicName);
 
         return McqQuestion.builder()
                 .questionStem(questionStem)
@@ -470,6 +492,34 @@ public class McqServiceImpl implements McqService {
         return idx - 1;
     }
 
+    /** Lowercase + collapse whitespace for fuzzy name matching. */
+    private String normalize(String s) {
+        return s == null ? "" : s.trim().replaceAll("\\s+", " ").toLowerCase();
+    }
+
+    private TechnologyStack resolveOrCreateStack(String stackName) {
+        String norm = normalize(stackName);
+        return stackRepo.findAll().stream()
+                .filter(s -> normalize(s.getStackName()).equals(norm))
+                .findFirst()
+                .orElseGet(() -> stackRepo.save(TechnologyStack.builder()
+                        .stackName(stackName.trim())
+                        .active(true)
+                        .build()));
+    }
+
+    private Topic resolveOrCreateTopic(TechnologyStack stack, String topicName) {
+        String norm = normalize(topicName);
+        return topicRepo.findByStackId(stack.getId()).stream()
+                .filter(t -> normalize(t.getTopicName()).equals(norm))
+                .findFirst()
+                .orElseGet(() -> topicRepo.save(Topic.builder()
+                        .stack(stack)
+                        .topicName(topicName.trim())
+                        .active(true)
+                        .build()));
+    }
+
     private String getCellString(Row row, int col) {
         Cell cell = row.getCell(col, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
         if (cell == null) return "";
@@ -508,14 +558,8 @@ public class McqServiceImpl implements McqService {
     }
 
     private void assertCanView(McqQuestion question, SmartQuizUserDetails currentUser) {
-        boolean isCreator = question.getCreator().getId().equals(currentUser.getUserId());
-        boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
-        boolean isReviewer = question.getReviewer() != null &&
-                             question.getReviewer().getId().equals(currentUser.getUserId());
-
-        if (!isCreator && !isAdmin && !isReviewer) {
-            throw new UnauthorizedAccessException("You don't have access to this question");
-        }
+        // Any authenticated user may view a question by ID (e.g. via a shared link).
+        // Write operations (edit, delete, submit) still enforce ownership/role checks.
     }
 
     // ── Level 3: Full-text search ──────────────────────────────────────────────

@@ -98,17 +98,11 @@ public class CommentServiceImpl implements CommentService {
     }
 
     /**
-     * Same per-question visibility rule McqServiceImpl#assertCanView enforces:
-     * only the creator, the assigned reviewer, or an admin may access the thread.
+     * Any authenticated user may read and post to the discussion thread of a question
+     * they can view (i.e. anyone who holds a valid JWT). Write operations on the
+     * question itself (edit, delete, review) still enforce ownership/role checks.
      */
     private void assertCanView(McqQuestion question, SmartQuizUserDetails currentUser) {
-        boolean isCreator = question.getCreator().getId().equals(currentUser.getUserId());
-        boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
-        boolean isReviewer = question.getReviewer() != null &&
-                             question.getReviewer().getId().equals(currentUser.getUserId());
-
-        if (!isCreator && !isAdmin && !isReviewer) {
-            throw new UnauthorizedAccessException("You don't have access to this question");
-        }
+        // Open to all authenticated users — access is gated at the JWT level.
     }
 }

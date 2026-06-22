@@ -38,7 +38,7 @@ public enum McqStatus {
     UNDER_REVIEW {
         @Override
         public Set<McqStatus> allowedTransitions() {
-            return Set.of(APPROVED, REJECTED, MODIFICATION_REQUESTED);
+            return Set.of(APPROVED, REJECTED, MODIFICATION_REQUESTED, DRAFT);
         }
     },
     MODIFICATION_REQUESTED {

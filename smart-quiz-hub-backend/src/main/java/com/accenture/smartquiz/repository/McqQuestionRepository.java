@@ -54,6 +54,8 @@ public interface McqQuestionRepository extends JpaRepository<McqQuestion, Long>,
 
     boolean existsByQuestionStemIgnoreCase(String questionStem);
 
+    java.util.Optional<McqQuestion> findFirstByQuestionStemIgnoreCase(String questionStem);
+
     /** Full-text search using the pre-built tsvector column (ranked by relevance) — native. */
     @Query(value = """
             SELECT * FROM mcq_questions
