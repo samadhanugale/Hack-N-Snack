@@ -14,7 +14,6 @@ import { ConfirmService } from '../../../shared/components/confirm-dialog/confir
 import { McqResponse, McqStatus } from '../../../core/models';
 import { statusBadgeClass, difficultyBadgeClass, statusLabel } from '../../../shared/utils/badge';
 import { ButtonDirective } from '../../../shared/components/button/button.directive';
-import { AiService, AiReview } from '../../../core/services/ai.service';
 
 @Component({
   selector: 'app-question-view',
