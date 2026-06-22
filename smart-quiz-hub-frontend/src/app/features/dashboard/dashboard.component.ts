@@ -43,6 +43,18 @@ export class DashboardComponent implements OnInit {
     ];
   }
 
+  /** Reviewer-role workload cards (shown to SMEs). */
+  get reviewCards() {
+    const s = this.stats();
+    if (!s) return [];
+    return [
+      { label: 'Assigned to Me',   value: s.assignedToMeCount ?? 0, icon: 'assignment_ind',  color: '#6366F1', tab: null },
+      { label: 'Pending My Review',value: s.pendingReviewCount ?? 0, icon: 'pending_actions', color: '#F59E0B', tab: 'pending' },
+      { label: 'Approved by Me',   value: s.approvedByMeCount ?? 0,  icon: 'task_alt',        color: '#10B981', tab: 'reviewed' },
+      { label: 'Rejected by Me',   value: s.rejectedByMeCount ?? 0,  icon: 'block',           color: '#EF4444', tab: 'reviewed' },
+    ];
+  }
+
   /** Admin-only insight/report destinations. */
   get insightCards() {
     return [

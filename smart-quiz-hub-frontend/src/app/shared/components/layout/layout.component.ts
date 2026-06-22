@@ -127,10 +127,15 @@ export class LayoutComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Mark read, close the panel, and deep-link to the relevant screen by type. */
+  /** Mark read, close the panel, and deep-link straight to the related question
+   *  (view mode) when the notification references one; otherwise fall back by type. */
   openNotification(n: AppNotification) {
     if (!n.read) this.markRead(n.id);
     this.bellOpen.set(false);
+    if (n.questionId != null) {
+      this.router.navigate(['/questions', n.questionId]);
+      return;
+    }
     const target = n.type === 'REVIEW_ASSIGNED' ? '/reviews' : '/questions';
     this.router.navigate([target]);
   }

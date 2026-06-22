@@ -72,6 +72,17 @@ export class PendingReviewsComponent implements OnInit {
   });
   activeFilterCount = computed(() => Object.values(this.filters()).filter(v => v != null).length);
 
+  /** Master–detail: the row whose detail is shown on the right. Falls back to the
+   *  first item of the current page if the selection is no longer in the list. */
+  selected = signal<McqResponse | null>(null);
+  current = computed(() => {
+    const sel = this.selected();
+    const list = this.questions();
+    if (sel && list.some(q => q.id === sel.id)) return sel;
+    return list[0] ?? null;
+  });
+  select(q: McqResponse): void { this.selected.set(q); }
+
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
     if (qp.get('tab') === 'reviewed') this.tab.set('reviewed');

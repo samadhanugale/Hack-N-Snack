@@ -112,6 +112,10 @@ export interface DashboardStats {
   approvedCount: number;
   rejectedCount: number;
   pendingReviewCount: number;
+  assignedToMeCount?: number;
+  reviewedByMeCount?: number;
+  approvedByMeCount?: number;
+  rejectedByMeCount?: number;
 }
 
 export interface SmeUserResponse {

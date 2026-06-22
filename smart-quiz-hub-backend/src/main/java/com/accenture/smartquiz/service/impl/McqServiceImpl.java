@@ -256,6 +256,9 @@ public class McqServiceImpl implements McqService {
         }
 
         Long uid = currentUser.getUserId();
+        long approvedByMe = mcqRepo.countByReviewerIdAndStatus(uid, McqStatus.APPROVED);
+        long rejectedByMe = mcqRepo.countByReviewerIdAndStatus(uid, McqStatus.REJECTED);
+        long modRequestedByMe = mcqRepo.countByReviewerIdAndStatus(uid, McqStatus.MODIFICATION_REQUESTED);
         return DashboardStatsResponse.builder()
                 .totalQuestions(mcqRepo.countByCreatorId(uid))
                 .draftCount(mcqRepo.countByCreatorIdAndStatus(uid, McqStatus.DRAFT))
@@ -264,7 +267,12 @@ public class McqServiceImpl implements McqService {
                 .modificationRequestedCount(mcqRepo.countByCreatorIdAndStatus(uid, McqStatus.MODIFICATION_REQUESTED))
                 .approvedCount(mcqRepo.countByCreatorIdAndStatus(uid, McqStatus.APPROVED))
                 .rejectedCount(mcqRepo.countByCreatorIdAndStatus(uid, McqStatus.REJECTED))
+                // Reviewer-role workload
                 .pendingReviewCount(mcqRepo.countByReviewerIdAndStatus(uid, McqStatus.UNDER_REVIEW))
+                .assignedToMeCount(mcqRepo.countByReviewerId(uid))
+                .approvedByMeCount(approvedByMe)
+                .rejectedByMeCount(rejectedByMe)
+                .reviewedByMeCount(approvedByMe + rejectedByMe + modRequestedByMe)
                 .build();
     }
 

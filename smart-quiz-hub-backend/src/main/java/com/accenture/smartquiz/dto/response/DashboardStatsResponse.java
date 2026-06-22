@@ -14,5 +14,11 @@ public class DashboardStatsResponse {
     private long modificationRequestedCount;
     private long approvedCount;
     private long rejectedCount;
-    private long pendingReviewCount;
+
+    // ── Reviewer workload (populated for SMEs; reflects the user's reviewer role) ──
+    private long pendingReviewCount;   // assigned to me & still UNDER_REVIEW
+    private long assignedToMeCount;    // every question ever assigned to me
+    private long reviewedByMeCount;    // questions I've decided (approved + rejected + mod-requested)
+    private long approvedByMeCount;
+    private long rejectedByMeCount;
 }
