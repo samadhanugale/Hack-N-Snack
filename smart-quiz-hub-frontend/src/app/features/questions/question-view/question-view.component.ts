@@ -94,6 +94,12 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
               <span [class]="diffBadge(q.difficulty)">{{ q.difficulty }}</span>
               <span class="px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border border-indigo-100 dark:border-indigo-500/20">{{ q.stackName }}</span>
               <span class="px-2.5 py-1 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300 text-xs font-semibold border border-cyan-100 dark:border-cyan-500/20">{{ q.topicName }}</span>
+              @if (q.aiGenerated) {
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-700 dark:text-fuchsia-300 text-xs font-semibold border border-fuchsia-100 dark:border-fuchsia-500/20" title="This question was generated with AI">
+                  <span class="material-icons text-[14px]" aria-hidden="true">auto_awesome</span>
+                  AI Generated
+                </span>
+              }
             </div>
 
             <!-- Review-pipeline status banner -->
