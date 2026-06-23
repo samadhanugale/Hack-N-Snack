@@ -237,30 +237,6 @@ export class QuestionBankComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Bulk-delete all selected questions (server enforces which are deletable). */
-  bulkDelete(): void {
-    const ids = [...this.selectedIds()];
-    this.confirm.ask({
-      title: `Delete ${ids.length} question${ids.length !== 1 ? 's' : ''}?`,
-      message: 'This permanently removes the selected questions. This cannot be undone.',
-      confirmText: 'Delete', variant: 'danger', icon: 'delete',
-    }).then(ok => {
-      if (!ok) return;
-      let remaining = ids.length, deleted = 0;
-      const tick = () => {
-        if (--remaining === 0) {
-          this.snack.success(`Deleted ${deleted} of ${ids.length}`);
-          this.clearSelection();
-          this.load();
-        }
-      };
-      ids.forEach(id => this.mcqSvc.deleteQuestion(id).subscribe({
-        next: () => { deleted++; tick(); },
-        error: () => tick(),
-      }));
-    });
-  }
-
   /** Single-question assign or reassign */
   openAssignReviewer(q: McqResponse): void {
     this.adminSvc.getSmesByStack(q.stackId).subscribe(res => {
@@ -312,20 +288,6 @@ export class QuestionBankComponent implements OnInit, OnDestroy {
   openEdit(q: McqResponse): void {
     const ref = this.dialog.open(QuestionFormComponent, { data: { question: q }, maxWidth: '780px', width: '100%' });
     ref.afterClosed().subscribe(result => { if (result) this.load(); });
-  }
-
-  delete(q: McqResponse): void {
-    this.confirm.ask({
-      title: 'Delete question?',
-      message: `"${q.questionStem.slice(0, 100)}${q.questionStem.length > 100 ? '…' : ''}"\n\nThis cannot be undone.`,
-      confirmText: 'Delete', variant: 'danger', icon: 'delete',
-    }).then(ok => {
-      if (!ok) return;
-      this.mcqSvc.deleteQuestion(q.id).subscribe({
-        next: () => { this.snack.success('Question deleted'); this.load(); },
-        error: err => this.snack.error(err.error?.message ?? 'Delete failed')
-      });
-    });
   }
 
   openAiGenerate(): void {

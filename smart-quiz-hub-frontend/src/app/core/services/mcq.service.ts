@@ -70,6 +70,11 @@ export class McqService {
     return this.http.post<ApiResponse<McqResponse>>(`${this.base}/${id}/submit`, {});
   }
 
+  /** Accept an AI-generated question (AI_PENDING → DRAFT) so it joins the creator's drafts. */
+  acceptAiQuestion(id: number): Observable<ApiResponse<McqResponse>> {
+    return this.http.post<ApiResponse<McqResponse>>(`${this.base}/${id}/accept`, {});
+  }
+
   deleteQuestion(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.base}/${id}`);
   }

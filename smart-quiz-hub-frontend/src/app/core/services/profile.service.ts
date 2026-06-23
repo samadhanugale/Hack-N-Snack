@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApiResponse, StackSummary, UserRole } from '../models';
+import { ApiResponse, MyAnalytics, StackSummary, UserRole } from '../models';
 import { environment } from '../../../environments/environment';
 
 /** Current-user profile incl. their stack (skill) assignments. */
@@ -26,5 +26,10 @@ export class ProfileService {
 
   updateMyStacks(stackIds: number[]): Observable<ApiResponse<MeProfile>> {
     return this.http.put<ApiResponse<MeProfile>>(`${this.base}/me/stacks`, { stackIds });
+  }
+
+  /** Personal analytics: the current user's authoring stats + reviewer activity. */
+  getMyAnalytics(): Observable<ApiResponse<MyAnalytics>> {
+    return this.http.get<ApiResponse<MyAnalytics>>(`${this.base}/me/analytics`);
   }
 }

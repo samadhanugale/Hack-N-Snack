@@ -4,6 +4,7 @@
 const BADGE_BASE = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ring-1 ring-inset';
 
 const STATUS_CLASSES: Record<string, string> = {
+  AI_PENDING:             'bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-200',
   DRAFT:                  'bg-slate-100 text-slate-600 ring-slate-200',
   READY_FOR_REVIEW:       'bg-amber-50 text-amber-700 ring-amber-200',
   UNDER_REVIEW:           'bg-blue-50 text-blue-700 ring-blue-200',
@@ -26,6 +27,10 @@ export function difficultyBadgeClass(difficulty: string): string {
   return `${BADGE_BASE} ${DIFF_CLASSES[difficulty] ?? 'bg-slate-100 text-slate-600'}`;
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  AI_PENDING: 'AI · Awaiting review',
+};
+
 export function statusLabel(status: string): string {
-  return status.replaceAll('_', ' ');
+  return STATUS_LABELS[status] ?? status.replaceAll('_', ' ');
 }

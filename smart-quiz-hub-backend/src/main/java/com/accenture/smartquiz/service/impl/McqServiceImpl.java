@@ -129,7 +129,10 @@ public class McqServiceImpl implements McqService {
         Specification<McqQuestion> spec = (root, query, cb) -> {
             var predicates = new ArrayList<jakarta.persistence.criteria.Predicate>();
             predicates.add(cb.equal(root.get("creator").get("id"), currentUser.getUserId()));
+            // AI-pending questions live in their own "AI Generated" review panel — keep them out
+            // of the main list unless explicitly requested via the status filter.
             if (status != null) predicates.add(cb.equal(root.get("status"), status));
+            else predicates.add(cb.notEqual(root.get("status"), McqStatus.AI_PENDING));
             if (stackId != null) predicates.add(cb.equal(root.get("stack").get("id"), stackId));
             if (difficulty != null) predicates.add(cb.equal(root.get("difficulty"), difficulty));
             addStemSearch(predicates, search, root, cb);
@@ -218,19 +221,40 @@ public class McqServiceImpl implements McqService {
 
     @Override
     @Transactional
+    public McqResponse acceptAiQuestion(Long id, SmartQuizUserDetails currentUser) {
+        McqQuestion question = findQuestionById(id);
+
+        if (!question.getCreator().getId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedAccessException("Only the creator can accept this AI-generated question");
+        }
+        if (question.getStatus() != McqStatus.AI_PENDING) {
+            throw new InvalidStatusTransitionException(question.getStatus(), McqStatus.DRAFT);
+        }
+
+        question.setStatus(McqStatus.DRAFT);
+        McqQuestion saved = mcqRepo.save(question);
+        auditService.record(saved.getId(), "AI_ACCEPTED", currentUser.getUserId(),
+                currentUser.getFullName(), "AI-generated question accepted (AI_PENDING → DRAFT)");
+        return McqMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public void deleteQuestion(Long id, SmartQuizUserDetails currentUser) {
         McqQuestion question = findQuestionById(id);
 
+        // Creator-only — admins cannot delete questions. (Also gated at the controller by
+        // @securityService.isCreator.) Deletable while still the creator's to manage:
+        // an AI-pending question (reject), a draft, or one not yet picked up for review.
         boolean isCreator = question.getCreator().getId().equals(currentUser.getUserId());
-        boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
-
-        boolean creatorDeletable = isCreator &&
-                (question.getStatus() == McqStatus.DRAFT ||
+        boolean deletable = isCreator &&
+                (question.getStatus() == McqStatus.AI_PENDING ||
+                 question.getStatus() == McqStatus.DRAFT ||
                  question.getStatus() == McqStatus.READY_FOR_REVIEW);
 
-        if (!creatorDeletable && !isAdmin) {
+        if (!deletable) {
             throw new UnauthorizedAccessException(
-                "You can only delete your own questions in DRAFT or READY FOR REVIEW status");
+                "You can only delete your own questions in AI-pending, draft, or ready-for-review status");
         }
 
         // Record with a null question_id: the audit_logs FK cascades on question delete, so a
@@ -555,13 +579,14 @@ public class McqServiceImpl implements McqService {
         boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
 
         boolean creatorEditable = isCreator &&
-                (question.getStatus() == McqStatus.DRAFT ||
+                (question.getStatus() == McqStatus.AI_PENDING ||
+                 question.getStatus() == McqStatus.DRAFT ||
                  question.getStatus() == McqStatus.READY_FOR_REVIEW ||
                  question.getStatus() == McqStatus.MODIFICATION_REQUESTED);
 
         if (!creatorEditable && !isAdmin) {
             throw new UnauthorizedAccessException(
-                "You can only edit your own questions in DRAFT, READY FOR REVIEW, or MODIFICATION REQUESTED status");
+                "You can only edit your own questions in AI-pending, draft, ready-for-review, or modification-requested status");
         }
     }
 

@@ -60,6 +60,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     { icon: 'dashboard',     label: 'Dashboard',       route: '/dashboard',       exact: true },
     { icon: 'quiz',          label: 'Questions',       route: '/questions' },
     { icon: 'rate_review',   label: 'Pending Reviews', route: '/reviews' },
+    { icon: 'insights',      label: 'My Analytics',    route: '/my-analytics', smeOnly: true },
     { icon: 'insights',      label: 'Analytics',       route: '/admin/analytics', adminOnly: true },
     { icon: 'admin_panel_settings', label: 'Administration', route: '/admin', adminOnly: true, exact: true }
   ];

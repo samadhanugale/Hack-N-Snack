@@ -46,6 +46,11 @@ export const routes: Routes = [
           import('./features/reviews/pending-reviews/pending-reviews.component').then(m => m.PendingReviewsComponent)
       },
       {
+        path: 'my-analytics',
+        loadComponent: () =>
+          import('./features/analytics/my-analytics.component').then(m => m.MyAnalyticsComponent)
+      },
+      {
         path: 'admin',
         canActivate: [adminGuard],
         loadComponent: () =>

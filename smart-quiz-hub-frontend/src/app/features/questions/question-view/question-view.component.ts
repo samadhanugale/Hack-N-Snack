@@ -552,8 +552,9 @@ export class QuestionViewComponent implements OnInit {
 
   readonly canDelete = computed(() => {
     if (!this.q) return false;
-    const deletableStatuses: McqStatus[] = ['DRAFT', 'READY_FOR_REVIEW'];
-    return (this.isOwner() && deletableStatuses.includes(this.q.status)) || this.isAdmin();
+    // Creator-only — admins cannot delete questions.
+    const deletableStatuses: McqStatus[] = ['AI_PENDING', 'DRAFT', 'READY_FOR_REVIEW'];
+    return this.isOwner() && deletableStatuses.includes(this.q.status);
   });
 
   readonly canApprove = computed(() => {

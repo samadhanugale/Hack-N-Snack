@@ -69,12 +69,19 @@ export class MyQuestionsComponent implements OnInit, OnDestroy {
   // ── Per-user analytics from the dashboard stats endpoint (not the page) ──────
   stats = signal({ total: 0, drafts: 0, inReview: 0, needsChanges: 0, approved: 0, rejected: 0, approvalRate: 0 });
 
+  // ── AI Generated review panel (gated accept/reject) ──────────────────────────
+  tab       = signal<'mine' | 'ai'>('mine');
+  aiRows    = signal<McqResponse[]>([]);
+  aiLoading = signal(false);
+  aiCount   = signal(0);
+
   private searchInput$ = new Subject<string>();
   private subs = new Subscription();
 
   ngOnInit(): void {
     this.stackSvc.getStacks().subscribe(r => this.stacks.set(r.data));
     this.loadStats();
+    this.loadAi();
 
     // Debounced search → reset to first page, then reload.
     this.subs.add(
@@ -200,7 +207,54 @@ export class MyQuestionsComponent implements OnInit, OnDestroy {
 
   openAiGenerate(): void {
     const ref = this.dialog.open(AiGenerateDialogComponent, { maxWidth: '600px', width: '100%' });
-    ref.afterClosed().subscribe(result => { if (result) this.refresh(); });
+    ref.afterClosed().subscribe(result => {
+      if (!result) return;
+      // Generated questions land in the AI review panel for the creator to vet first.
+      this.tab.set('ai');
+      this.loadAi();
+    });
+  }
+
+  // ── AI Generated review panel ────────────────────────────────────────────────
+  setTab(tab: 'mine' | 'ai'): void {
+    this.tab.set(tab);
+    if (tab === 'ai') this.loadAi();
+  }
+
+  /** Load the creator's AI-pending questions (the review queue). */
+  loadAi(): void {
+    this.aiLoading.set(true);
+    this.mcqSvc.getMyQuestions({ status: 'AI_PENDING', sort: 'createdAt', direction: 'desc', size: 100 }).subscribe({
+      next: res => {
+        this.aiRows.set(res.data.content);
+        this.aiCount.set(res.data.totalElements);
+        this.aiLoading.set(false);
+      },
+      error: () => this.aiLoading.set(false),
+    });
+  }
+
+  /** Accept an AI question into drafts (AI_PENDING → DRAFT). */
+  acceptAi(q: McqResponse): void {
+    this.mcqSvc.acceptAiQuestion(q.id).subscribe({
+      next: () => { this.snack.success('Accepted — moved to your drafts'); this.loadAi(); this.refresh(); },
+      error: err => this.snack.error(err.error?.message ?? 'Failed to accept'),
+    });
+  }
+
+  /** Reject (discard) an AI question. */
+  rejectAi(q: McqResponse): void {
+    this.confirm.ask({
+      title: 'Discard this AI question?',
+      message: 'This AI-generated question will be permanently removed. This cannot be undone.',
+      confirmText: 'Discard', variant: 'danger', icon: 'delete',
+    }).then(ok => {
+      if (!ok) return;
+      this.mcqSvc.deleteQuestion(q.id).subscribe({
+        next: () => { this.snack.success('Discarded'); this.loadAi(); },
+        error: err => this.snack.error(err.error?.message ?? 'Failed to discard'),
+      });
+    });
   }
 
   goBulkUpload(): void { this.router.navigate(['/bulk-upload']); }

@@ -31,6 +31,9 @@ public interface McqService {
 
     McqResponse submitForReview(Long id, SmartQuizUserDetails currentUser);
 
+    /** Creator accepts an AI-generated question (AI_PENDING → DRAFT), moving it into their drafts. */
+    McqResponse acceptAiQuestion(Long id, SmartQuizUserDetails currentUser);
+
     void deleteQuestion(Long id, SmartQuizUserDetails currentUser);
 
     DashboardStatsResponse getDashboardStats(SmartQuizUserDetails currentUser);

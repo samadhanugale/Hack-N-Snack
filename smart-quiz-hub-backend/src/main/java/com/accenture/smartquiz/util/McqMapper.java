@@ -42,6 +42,7 @@ public final class McqMapper {
                 .reviewerName(q.getReviewer() != null ? q.getReviewer().getFullName() : null)
                 .reviewerComments(q.getReviewerComments())
                 .aiSimilarityScore(q.getAiSimilarityScore())
+                .aiGenerated(q.isAiGenerated())
                 .createdAt(q.getCreatedAt())
                 .updatedAt(q.getUpdatedAt())
                 .assignedAt(q.getAssignedAt())

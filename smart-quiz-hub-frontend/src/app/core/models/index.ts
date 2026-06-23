@@ -1,5 +1,6 @@
 export type UserRole = 'SME' | 'ADMIN';
 export type McqStatus =
+  | 'AI_PENDING'
   | 'DRAFT'
   | 'READY_FOR_REVIEW'
   | 'UNDER_REVIEW'
@@ -70,6 +71,7 @@ export interface McqResponse {
   reviewerName: string | null;
   reviewerComments: string | null;
   aiSimilarityScore: number | null;
+  aiGenerated: boolean;
   createdAt: string;
   updatedAt: string;
   assignedAt?: string | null;
@@ -271,6 +273,20 @@ export interface AnalyticsOverview {
 export interface ReviewerWorkload {
   reviewerName: string;
   pendingCount: number;
+}
+
+/** Personal analytics for the current user: their authoring stats + reviewer activity. */
+export interface MyAnalytics {
+  authoredTotal: number;
+  authoredByStatus: Record<string, number>;
+  authoredByDifficulty: Record<string, number>;
+  authoredWeeklyTrend: WeeklyCount[];
+  approvedCount: number;
+  rejectedCount: number;
+  reviewApproved: number;
+  reviewRejected: number;
+  reviewModificationRequested: number;
+  reviewPending: number;
 }
 
 /** Optional ISO date (yyyy-MM-dd) bounds for analytics queries. */

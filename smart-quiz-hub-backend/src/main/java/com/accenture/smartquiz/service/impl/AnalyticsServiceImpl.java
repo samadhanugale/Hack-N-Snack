@@ -1,10 +1,13 @@
 package com.accenture.smartquiz.service.impl;
 
 import com.accenture.smartquiz.dto.response.AnalyticsOverviewResponse;
+import com.accenture.smartquiz.dto.response.MyAnalyticsResponse;
 import com.accenture.smartquiz.dto.response.QuestionAnalyticsResponse;
 import com.accenture.smartquiz.dto.response.ReviewerWorkloadResponse;
 import com.accenture.smartquiz.dto.response.SmeReportResponse;
+import com.accenture.smartquiz.entity.McqQuestion;
 import com.accenture.smartquiz.entity.User;
+import com.accenture.smartquiz.entity.enums.Difficulty;
 import com.accenture.smartquiz.entity.enums.McqStatus;
 import com.accenture.smartquiz.entity.enums.UserRole;
 import com.accenture.smartquiz.repository.McqQuestionRepository;
@@ -93,6 +96,56 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .byStack(byStack)
                 .byDifficulty(byDifficulty)
                 .weeklyTrend(trend)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MyAnalyticsResponse getMyAnalytics(Long userId) {
+        List<McqQuestion> authored = mcqRepo.findAllByCreatorId(userId);
+
+        // Authoring — seed every status/difficulty bucket with 0 so empty buckets still render.
+        Map<String, Long> byStatus = new LinkedHashMap<>();
+        Arrays.stream(McqStatus.values()).forEach(st -> byStatus.put(st.name(), 0L));
+        Map<String, Long> byDifficulty = new LinkedHashMap<>();
+        Arrays.stream(Difficulty.values()).forEach(d -> byDifficulty.put(d.name(), 0L));
+
+        for (McqQuestion q : authored) {
+            byStatus.merge(q.getStatus().name(), 1L, Long::sum);
+            byDifficulty.merge(q.getDifficulty().name(), 1L, Long::sum);
+        }
+
+        // Weekly authored trend — continuous, zero-filled series over the last 8 weeks (Mondays).
+        Map<String, Long> weekCounts = new HashMap<>();
+        for (McqQuestion q : authored) {
+            if (q.getCreatedAt() == null) continue;
+            LocalDate monday = LocalDate.ofInstant(q.getCreatedAt(), ZoneOffset.UTC)
+                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            weekCounts.merge(monday.toString(), 1L, Long::sum);
+        }
+        LocalDate endMonday = LocalDate.now(ZoneOffset.UTC)
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        List<AnalyticsOverviewResponse.WeeklyCount> trend = new ArrayList<>();
+        for (LocalDate wk = endMonday.minusWeeks(7); !wk.isAfter(endMonday); wk = wk.plusWeeks(1)) {
+            trend.add(AnalyticsOverviewResponse.WeeklyCount.builder()
+                    .week(wk.toString())
+                    .count(weekCounts.getOrDefault(wk.toString(), 0L))
+                    .build());
+        }
+
+        return MyAnalyticsResponse.builder()
+                .authoredTotal(authored.size())
+                .authoredByStatus(byStatus)
+                .authoredByDifficulty(byDifficulty)
+                .authoredWeeklyTrend(trend)
+                .approvedCount(byStatus.getOrDefault(McqStatus.APPROVED.name(), 0L))
+                .rejectedCount(byStatus.getOrDefault(McqStatus.REJECTED.name(), 0L))
+                // Reviewing — decisions I made + work currently assigned to me.
+                .reviewApproved(mcqRepo.countByReviewerIdAndStatus(userId, McqStatus.APPROVED))
+                .reviewRejected(mcqRepo.countByReviewerIdAndStatus(userId, McqStatus.REJECTED))
+                .reviewModificationRequested(
+                        mcqRepo.countByReviewerIdAndStatus(userId, McqStatus.MODIFICATION_REQUESTED))
+                .reviewPending(mcqRepo.countByReviewerIdAndStatus(userId, McqStatus.UNDER_REVIEW))
                 .build();
     }
 

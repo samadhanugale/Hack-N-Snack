@@ -23,6 +23,9 @@ public interface McqQuestionRepository extends JpaRepository<McqQuestion, Long>,
 
     Page<McqQuestion> findByCreatorId(Long creatorId, Pageable pageable);
 
+    /** All of a user's authored questions (unpaged) — backs per-SME analytics aggregation. */
+    List<McqQuestion> findAllByCreatorId(Long creatorId);
+
     Page<McqQuestion> findByCreatorIdAndStatus(Long creatorId, McqStatus status, Pageable pageable);
 
     Page<McqQuestion> findByReviewerIdAndStatus(Long reviewerId, McqStatus status, Pageable pageable);

@@ -1,6 +1,7 @@
 package com.accenture.smartquiz.service;
 
 import com.accenture.smartquiz.dto.response.AnalyticsOverviewResponse;
+import com.accenture.smartquiz.dto.response.MyAnalyticsResponse;
 import com.accenture.smartquiz.dto.response.QuestionAnalyticsResponse;
 import com.accenture.smartquiz.dto.response.ReviewerWorkloadResponse;
 import com.accenture.smartquiz.dto.response.SmeReportResponse;
@@ -12,6 +13,9 @@ public interface AnalyticsService {
 
     /** Overview within an optional [start, end) window. Null bounds mean unbounded. */
     AnalyticsOverviewResponse getOverview(Instant start, Instant end);
+
+    /** Personal analytics for one user: their authoring stats + their reviewer activity. */
+    MyAnalyticsResponse getMyAnalytics(Long userId);
 
     /** Per-SME performance report (Story 2.1) within an optional [start, end) window. */
     List<SmeReportResponse> getSmeReports(Instant start, Instant end);

@@ -35,4 +35,21 @@ public class SecurityService {
                         || principal.getRole() == UserRole.ADMIN)
                 .orElse(true);
     }
+
+    /**
+     * Strictly creator-only (admins excluded). Backs delete / accept endpoints where even an
+     * admin must not act on someone else's question.
+     *
+     * @return {@code true} only if the principal is the question's creator (or the question is
+     *         missing, so the service layer surfaces a clean 404 instead of a 403).
+     */
+    @Transactional(readOnly = true)
+    public boolean isCreator(Long questionId, SmartQuizUserDetails principal) {
+        if (principal == null) {
+            return false;
+        }
+        return mcqRepo.findById(questionId)
+                .map(q -> q.getCreator().getId().equals(principal.getUserId()))
+                .orElse(true);
+    }
 }

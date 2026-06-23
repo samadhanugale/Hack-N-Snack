@@ -68,6 +68,10 @@ public class McqQuestion {
     @Column(name = "ai_similarity_score", precision = 5, scale = 4)
     private BigDecimal aiSimilarityScore;
 
+    /** True when this question was produced by the AI generator — a permanent identifier (kept after acceptance). */
+    @Column(name = "ai_generated", nullable = false)
+    private boolean aiGenerated;
+
     @Version
     @Column(nullable = false)
     private Long version;

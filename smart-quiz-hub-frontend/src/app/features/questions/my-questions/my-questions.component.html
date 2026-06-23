@@ -38,6 +38,27 @@
       </div>
     </div>
 
+  <!-- Tabs: my questions vs the AI review queue -->
+  <div class="flex items-center gap-1 mb-6 border-b border-slate-200 dark:border-white/[0.08]">
+    <button (click)="setTab('mine')" type="button"
+            class="press relative px-4 py-2.5 text-sm font-semibold transition-colors"
+            [class]="tab() === 'mine' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'">
+      My Questions
+      @if (tab() === 'mine') { <span class="absolute left-0 -bottom-px h-0.5 w-full bg-indigo-500 rounded-full"></span> }
+    </button>
+    <button (click)="setTab('ai')" type="button"
+            class="press relative px-4 py-2.5 text-sm font-semibold transition-colors inline-flex items-center gap-2"
+            [class]="tab() === 'ai' ? 'text-fuchsia-600 dark:text-fuchsia-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'">
+      <span class="material-icons text-[17px]">auto_awesome</span>
+      AI Generated
+      @if (aiCount() > 0) {
+        <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-300 text-[11px] font-bold">{{ aiCount() }}</span>
+      }
+      @if (tab() === 'ai') { <span class="absolute left-0 -bottom-px h-0.5 w-full bg-fuchsia-500 rounded-full"></span> }
+    </button>
+  </div>
+
+  @if (tab() === 'mine') {
   <!-- Analytics strip — click a card to filter the table -->
   <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-7 stagger">
     <button (click)="filterByStatus(null)"
@@ -127,7 +148,14 @@
             <tr class="border-b border-slate-100 dark:border-white/[0.06] hover:bg-slate-50/60 dark:hover:bg-white/[0.03] transition-colors last:border-0">
               <td class="px-5 py-4 max-w-[280px]">
                 <span class="text-slate-800 dark:text-slate-200 font-medium leading-snug line-clamp-2" [title]="q.questionStem">{{ truncate(q.questionStem) }}</span>
-                <span class="font-mono text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 block">#{{ q.id }}</span>
+                <span class="flex items-center gap-1.5 mt-0.5">
+                  <span class="font-mono text-[10px] text-slate-400 dark:text-slate-500">#{{ q.id }}</span>
+                  @if (q.aiGenerated) {
+                    <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-fuchsia-50 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-300 text-[9px] font-bold uppercase tracking-wide ring-1 ring-inset ring-fuchsia-200 dark:ring-fuchsia-800" matTooltip="Generated with AI">
+                      <span class="material-icons text-[11px]">auto_awesome</span>AI
+                    </span>
+                  }
+                </span>
               </td>
               <td class="px-5 py-4">
                 <p class="text-slate-800 dark:text-slate-200 font-semibold text-xs">{{ q.stackName }}</p>
@@ -196,5 +224,71 @@
         </div>
       </div>
     </div>
+  }
+
+  } @else {
+    <!-- ── AI Generated review queue (gated accept/reject) ───────────────── -->
+    <div class="rounded-xl bg-fuchsia-50/60 dark:bg-fuchsia-900/10 ring-1 ring-inset ring-fuchsia-200/70 dark:ring-fuchsia-800/40 px-4 py-3 mb-5 flex items-start gap-2.5">
+      <span class="material-icons text-fuchsia-500 text-[20px] mt-0.5">auto_awesome</span>
+      <p class="text-sm text-fuchsia-900/80 dark:text-fuchsia-200/80 leading-relaxed">
+        Review each AI-generated question before it joins your drafts. <b>Accept</b> to keep it (you can still edit &amp; submit it afterwards), or <b>Discard</b> to remove it. They stay out of your main list until accepted.
+      </p>
+    </div>
+
+    @if (aiLoading()) {
+      <div class="space-y-3 stagger">
+        @for (n of [1,2,3]; track n) { <div class="skeleton h-28 w-full"></div> }
+      </div>
+    } @else if (aiRows().length === 0) {
+      <div class="card py-20 flex flex-col items-center gap-4 text-center animate-fade-up">
+        <div class="w-16 h-16 rounded-2xl bg-fuchsia-50 dark:bg-fuchsia-900/20 flex items-center justify-center">
+          <span class="material-icons text-fuchsia-400 text-3xl">auto_awesome</span>
+        </div>
+        <div>
+          <p class="text-slate-800 dark:text-slate-200 font-semibold">No AI questions to review</p>
+          <p class="text-slate-400 dark:text-slate-500 text-sm mt-1">Use <b>Add Question → Generate with AI</b> to create some.</p>
+        </div>
+      </div>
+    } @else {
+      <div class="space-y-3 stagger">
+        @for (q of aiRows(); track q.id) {
+          <div class="card p-5 animate-fade-up">
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1.5">
+                  <span class="font-mono text-[10px] text-slate-400">#{{ q.id }}</span>
+                  <span [class]="diffBadge(q.difficulty)">{{ q.difficulty }}</span>
+                  <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">{{ q.stackName }} · {{ q.topicName }}</span>
+                </div>
+                <p class="text-slate-800 dark:text-slate-100 font-semibold leading-snug">{{ q.questionStem }}</p>
+                <ul class="mt-2.5 space-y-1">
+                  @for (opt of q.options; track $index) {
+                    <li class="flex items-start gap-2 text-sm"
+                        [class]="q.correctOptionIndices.includes($index) ? 'text-emerald-700 dark:text-emerald-400 font-semibold' : 'text-slate-600 dark:text-slate-300'">
+                      <span class="material-icons text-[15px] mt-0.5">{{ q.correctOptionIndices.includes($index) ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                      <span>{{ opt }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+              <button (click)="openView(q)" appBtn="secondary" size="sm">
+                <span class="material-icons text-[16px]">visibility</span> View
+              </button>
+              <button (click)="openEdit(q)" appBtn="secondary" size="sm">
+                <span class="material-icons text-[16px]">edit</span> Edit
+              </button>
+              <button (click)="rejectAi(q)" appBtn="danger" size="sm">
+                <span class="material-icons text-[16px]">close</span> Discard
+              </button>
+              <button (click)="acceptAi(q)" appBtn="success" size="sm">
+                <span class="material-icons text-[16px]">check</span> Accept
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
   }
 </div>

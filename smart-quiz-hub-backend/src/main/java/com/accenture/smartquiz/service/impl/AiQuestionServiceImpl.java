@@ -195,7 +195,8 @@ public class AiQuestionServiceImpl implements AiQuestionService {
                 .stack(stack)
                 .topic(topic)
                 .creator(creator)
-                .status(McqStatus.DRAFT)
+                .aiGenerated(true)
+                .status(McqStatus.AI_PENDING)
                 .build();
     }
 

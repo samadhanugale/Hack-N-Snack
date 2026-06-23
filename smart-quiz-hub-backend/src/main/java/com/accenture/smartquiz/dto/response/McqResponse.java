@@ -29,6 +29,7 @@ public class McqResponse {
     private String reviewerName;
     private String reviewerComments;
     private BigDecimal aiSimilarityScore;
+    private boolean aiGenerated;
     private Instant createdAt;
     private Instant updatedAt;
     private Instant assignedAt;   // when the current reviewer was assigned (review SLA clock)

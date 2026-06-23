@@ -117,9 +117,19 @@ public class McqController {
                 mcqService.submitForReview(id, currentUser)));
     }
 
+    @PostMapping("/{id}/accept")
+    @PreAuthorize("@securityService.isCreator(#id, principal)")
+    @Operation(summary = "Accept an AI-generated question (AI_PENDING → DRAFT)")
+    public ResponseEntity<ApiResponse<McqResponse>> acceptAi(
+            @PathVariable Long id,
+            @AuthenticationPrincipal SmartQuizUserDetails currentUser) {
+        return ResponseEntity.ok(ApiResponse.success("AI question accepted",
+                mcqService.acceptAiQuestion(id, currentUser)));
+    }
+
     @DeleteMapping("/{id}")
-    @PreAuthorize("@securityService.isOwner(#id, principal)")
-    @Operation(summary = "Delete a question (creator or admin only)")
+    @PreAuthorize("@securityService.isCreator(#id, principal)")
+    @Operation(summary = "Delete a question (creator only — admins cannot delete)")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable Long id,
             @AuthenticationPrincipal SmartQuizUserDetails currentUser) {

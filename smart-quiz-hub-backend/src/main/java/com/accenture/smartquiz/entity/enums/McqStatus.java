@@ -23,6 +23,17 @@ import java.util.Set;
  */
 public enum McqStatus {
 
+    /**
+     * Freshly AI-generated question awaiting the creator's review. It is quarantined
+     * out of the normal draft list until the creator <b>accepts</b> it (→ DRAFT) or
+     * rejects it (deleted). Cannot be submitted for review while in this state.
+     */
+    AI_PENDING {
+        @Override
+        public Set<McqStatus> allowedTransitions() {
+            return Set.of(DRAFT);
+        }
+    },
     DRAFT {
         @Override
         public Set<McqStatus> allowedTransitions() {

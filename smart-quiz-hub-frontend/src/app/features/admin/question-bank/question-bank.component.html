@@ -54,10 +54,6 @@
         <span class="material-icons text-[16px]" aria-hidden="true">check_circle</span>
         Approve
       </button>
-      <button (click)="bulkDelete()" appBtn="danger" size="sm">
-        <span class="material-icons text-[16px]" aria-hidden="true">delete</span>
-        Delete
-      </button>
       <button (click)="clearSelection()"
               class="text-xs text-indigo-400 hover:text-indigo-600 font-semibold transition-colors">
         Clear
@@ -166,11 +162,6 @@
                           [disabled]="q.status === 'APPROVED' || q.status === 'REJECTED'"
                           class="press w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 enabled:hover:bg-slate-100 enabled:hover:text-indigo-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                     <span class="material-icons text-[16px]" aria-hidden="true">edit</span>
-                  </button>
-                  <button (click)="delete(q)" matTooltip="Delete" aria-label="Delete question"
-                          [disabled]="q.status === 'DRAFT'"
-                          class="press w-8 h-8 rounded-lg flex items-center justify-center text-rose-500 enabled:hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                    <span class="material-icons text-[16px]" aria-hidden="true">delete_outline</span>
                   </button>
                 </div>
               </td>
